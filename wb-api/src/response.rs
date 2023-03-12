@@ -23,5 +23,6 @@ pub struct SingleTodoResponse {
 pub struct TodoListResponse {
     pub status: String,
     pub results: usize,
+    pub totalResults: usize,
     pub todos: Vec<Todo>,
 }

@@ -25,10 +25,12 @@ async fn todos_list_handler(opts: web::Query::<QueryOptions>, data: web::Data<Ap
     let limit = opts.limit.unwrap_or(10);
     let offset = (opts.page.unwrap_or(1) - 1) * limit;
 
+    let totalTodos = todos.len();
     let todos: Vec<Todo> = todos.clone().into_iter().skip(offset).take(limit).collect();
 
     let json_response = TodoListResponse{
         status: "success".to_string(),
+        totalResults: totalTodos,
         results: todos.len(),
         todos,
     };
