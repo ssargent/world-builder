@@ -23,6 +23,7 @@ pub struct SingleTodoResponse {
 pub struct TodoListResponse {
     pub status: String,
     pub results: usize,
-    pub totalResults: usize,
+    #[serde(rename="totalResults")]
+    pub total_results: usize,
     pub todos: Vec<Todo>,
 }
