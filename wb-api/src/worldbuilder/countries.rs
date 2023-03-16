@@ -14,3 +14,16 @@ pub struct Country {
     #[serde(rename = "updatedAt")]
     pub updated_at: Option<chrono::DateTime<chrono::Utc>>,   
 }
+
+pub struct CountryManager {}
+
+impl CountryManager {
+    pub fn new() -> CountryManager {
+        CountryManager {  }
+    }
+
+    pub fn hello(&self) -> String {
+        let s = "hello world";
+        s.to_string()
+    }
+}

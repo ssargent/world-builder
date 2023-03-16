@@ -2,7 +2,7 @@ use crate::{
     model::{AppState},
     response::{GenericResponse},
     schema::{FilterOptions},
-    worldbuilder::{Country, Region, Community },
+    worldbuilder::{Country, Region, Community, CountryManager },
 };
 use actix_web::{get, web, HttpResponse, Responder}; 
 use serde_json::json; 
@@ -98,12 +98,15 @@ pub async fn community_list_handler( opts: web::Query<FilterOptions>, data: web:
         return HttpResponse::InternalServerError().json(json!({"status": "error", "message": message}));
     }
 
+    let cm = CountryManager::new();
+
     let communities = query_result.unwrap();
 
     let json_response = serde_json::json!({
         "status":"success",
         "results": communities.len(),
-        "communities": communities
+        "communities": communities,
+        "specialMessage": cm.hello(),
     });
 
     HttpResponse::Ok().json(json_response)
