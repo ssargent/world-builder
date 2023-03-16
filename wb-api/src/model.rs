@@ -1,29 +1,14 @@
-use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Postgres, Pool};
 use uuid::Uuid;
-use std::sync::{Arc, Mutex};
-
-#[allow(non_snake_case)]
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct Todo {
-    pub id: Option<Uuid>,
-    pub title: String,
-    pub content: String,
-    pub completed: Option<bool>,
-    pub createdAt: Option<DateTime<Utc>>,
-    pub updatedAt: Option<DateTime<Utc>>,
-}
 
 pub struct AppState {
-    pub todo_db: Arc<Mutex<Vec<Todo>>>,
     pub db: Pool<Postgres>,
 }
 
 impl AppState {
     pub fn init(pool: Pool<Postgres>) -> AppState {
         AppState {
-            todo_db: Arc::new(Mutex::new(Vec::new())),
             db:  pool,
         }
     }

@@ -2,6 +2,7 @@ mod handler;
 mod model;
 mod response;
 mod schema;
+mod worldbuilder;
 
 use actix_cors::Cors;
 use actix_web::middleware::Logger;

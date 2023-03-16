@@ -1,12 +1,11 @@
 use crate::{
-    model::{AppState, QueryOptions, Todo, UpdateTodoSchema, CountryModel, RegionModel, CommunityModel},
-    response::{GenericResponse, SingleTodoResponse, TodoData, TodoListResponse},
-    schema::{FilterOptions, CreateCountrySchema, UpdateCountrySchema},
+    model::{AppState},
+    response::{GenericResponse},
+    schema::{FilterOptions},
+    worldbuilder::{Country, Region, Community },
 };
-use actix_web::{delete, get, patch, post, web, HttpResponse, Responder};
-use chrono::prelude::*;
-use serde_json::json;
-use uuid::Uuid;
+use actix_web::{get, web, HttpResponse, Responder}; 
+use serde_json::json; 
 
 #[get("/healthchecker")]
 async fn health_checker_handler() -> impl Responder {
@@ -19,69 +18,14 @@ async fn health_checker_handler() -> impl Responder {
 
     HttpResponse::Ok().json(response_json)
 }
-
-#[get("/todos")]
-async fn todos_list_handler(opts: web::Query::<QueryOptions>, data: web::Data<AppState>) -> impl Responder {
-    let todos = data.todo_db.lock().unwrap();
-
-    let limit = opts.limit.unwrap_or(10);
-    let offset = (opts.page.unwrap_or(1) - 1) * limit;
-
-    let totalTodos = todos.len();
-    let todos: Vec<Todo> = todos.clone().into_iter().skip(offset).take(limit).collect();
-
-    let json_response = TodoListResponse{
-        status: "success".to_string(),
-        total_results: totalTodos,
-        results: todos.len(),
-        todos,
-    };
-
-    HttpResponse::Ok().json(json_response)
-}
-
-#[post("/todos")]
-async fn create_todo_handler(mut body: web::Json<Todo>, data: web::Data<AppState>) -> impl Responder {
-    let mut vec = data.todo_db.lock().unwrap();
-
-    let todo = vec.iter().find(|todo| todo.title == body.title);
-
-    if todo.is_some() {
-        let error_response = GenericResponse{
-            status: "fail".to_string(),
-            message: format!("Todo with title '{}' already exists", body.title),
-        };
-
-        return HttpResponse::Conflict().json(error_response);
-    }
-
-    let uuid_id = Uuid::new_v4();
-    let datetime = Utc::now();
-
-    body.id = Some(uuid_id);
-    body.completed = Some(false);
-    body.createdAt = Some(datetime);
-    body.updatedAt = Some(datetime);
-
-    let todo = body.to_owned();
-
-    vec.push(body.into_inner());
-
-    let json_response = SingleTodoResponse{
-        status: "success".to_string(),
-        data: TodoData{ todo },
-    };
-
-    HttpResponse::Ok().json(json_response)
-}
-
+ 
 #[get("/countries")]
 pub async fn country_list_handler( opts: web::Query<FilterOptions>, data: web::Data<AppState>) -> impl Responder {
     let limit = opts.limit.unwrap_or(10);
     let offset = (opts.page.unwrap_or(1) - 1) * limit;
 
     let query_result = sqlx::query_as!(
-        CountryModel,
+        Country,
         "select * from world.countries order by id limit $1 offset $2",
         limit as i32,
         offset as i32
@@ -111,7 +55,7 @@ pub async fn region_list_handler( opts: web::Query<FilterOptions>, data: web::Da
     let offset = (opts.page.unwrap_or(1) - 1) * limit;
 
     let query_result = sqlx::query_as!(
-        RegionModel,
+        Region,
         r#"select id, wbrn, region_name, country_id, created_at, updated_at from world.regions order by id limit $1 offset $2"#, 
         limit as i32,
         offset as i32
@@ -141,7 +85,7 @@ pub async fn community_list_handler( opts: web::Query<FilterOptions>, data: web:
     let offset = (opts.page.unwrap_or(1) - 1) * limit;
 
     let query_result = sqlx::query_as!(
-        CommunityModel,
+        Community,
         r#"select * from world.communities order by id limit $1 offset $2"#,
         limit as i32,
         offset as i32
@@ -169,8 +113,6 @@ pub async fn community_list_handler( opts: web::Query<FilterOptions>, data: web:
 pub fn config(conf: &mut web::ServiceConfig) {
     let scope = web::scope("/api")
         .service(health_checker_handler)
-        .service(todos_list_handler)
-        .service(create_todo_handler)
         .service(country_list_handler)
         .service(region_list_handler)
         .service(community_list_handler);
