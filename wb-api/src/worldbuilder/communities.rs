@@ -1,6 +1,12 @@
+use actix_web::web;
+use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
+
+use crate::model::AppState;
+
+use super::Manager;
 
 #[derive(Debug, FromRow, Deserialize, Serialize)]
 #[allow(non_snake_case)]
@@ -14,5 +20,35 @@ pub struct Community {
     #[serde(rename = "createdAt")]
     pub created_at: Option<chrono::DateTime<chrono::Utc>>,
     #[serde(rename = "updatedAt")]
-    pub updated_at: Option<chrono::DateTime<chrono::Utc>>,   
+    pub updated_at: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+pub struct CommunityManager {}
+
+#[async_trait]
+impl super::Manager<Community> for CommunityManager {
+    async fn create(
+        &self,
+        data: web::Data<AppState>,
+        entity: Community,
+    ) -> Result<Community, super::WBError> {
+        todo!()
+    }
+
+    async fn get_by_id(
+        &self,
+        data: web::Data<AppState>,
+        id: Uuid,
+    ) -> Result<Community, super::WBError> {
+        todo!()
+    }
+
+    async fn get_all(
+        &self,
+        data: web::Data<AppState>,
+        skip: i32,
+        take: i32,
+    ) -> Result<super::PagedSet<Community>, super::WBError> {
+        todo!()
+    }
 }
