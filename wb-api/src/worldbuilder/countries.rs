@@ -21,11 +21,11 @@ pub struct Country {
     pub updated_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
-pub struct CountryManager {}
+pub struct CountryManager { db: Pool<Postgres>}
 
 impl CountryManager {
-    pub fn new() -> CountryManager {
-        CountryManager {}
+    pub fn new(db: Pool<Postgres>) -> CountryManager {
+        CountryManager {db: db}
     }
 
     pub fn hello(&self) -> String {
@@ -37,24 +37,21 @@ impl CountryManager {
 #[async_trait]
 impl super::Manager<Country> for CountryManager {
     async fn create(
-        &self,
-        data: web::Data<AppState>,
+        &self, 
         entity: Country,
     ) -> Result<Country, super::WBError> {
         todo!()
     }
 
     async fn get_by_id(
-        &self,
-        data: web::Data<AppState>,
+        &self, 
         id: Uuid,
     ) -> Result<Country, super::WBError> {
         todo!()
     }
 
     async fn get_all(
-        &self,
-        data: web::Data<AppState>,
+        &self, 
         skip: i32,
         take: i32,
     ) -> Result<super::PagedSet<Country>, super::WBError> {
@@ -64,10 +61,13 @@ impl super::Manager<Country> for CountryManager {
             take as i32,
             skip as i32
         )
-        .fetch_all(&data.db)
+        .fetch_all(&self.db)
         .await;
 
-        let countries = query_result.unwrap();
+        let countries = match query_result {
+            Ok(c) => c,
+            Err(err) => return Err(super::WBError::DatabaseError(err)),
+        };
 
         Ok(PagedSet {
             results: countries.len(),

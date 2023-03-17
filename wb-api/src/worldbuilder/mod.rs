@@ -16,11 +16,10 @@ use crate::model::AppState;
 
 #[async_trait]
 pub trait Manager<T> {
-    async fn create(&self, data: web::Data<AppState>, entity: T) -> Result<T, WBError>;
-    async fn get_by_id(&self, data: web::Data<AppState>, id: Uuid) -> Result<T, WBError>;
+    async fn create(&self, entity: T) -> Result<T, WBError>;
+    async fn get_by_id(&self, id: Uuid) -> Result<T, WBError>;
     async fn get_all(
         &self,
-        data: web::Data<AppState>,
         skip: i32,
         take: i32,
     ) -> Result<PagedSet<T>, WBError>;
@@ -37,8 +36,10 @@ pub struct PagedSet<T> {
 // todo: flesh this out a bit more.
 #[derive(Error, Debug)]
 pub enum WBError {
-    #[error("a server error occurred.")]
-    ServerError,
+    #[error(transparent)]
+    DatabaseError(#[from] sqlx::Error),
+    #[error("a server error occurred: {0}.")]
+    ServerError(String),
     #[error("an unknown error occurred.")]
     Unknown,
 }

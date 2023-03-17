@@ -26,24 +26,21 @@ pub struct RegionManager {}
 #[async_trait]
 impl super::Manager<Region> for RegionManager {
     async fn create(
-        &self,
-        data: web::Data<AppState>,
+        &self, 
         entity: Region,
     ) -> Result<Region, super::WBError> {
         todo!()
     }
 
     async fn get_by_id(
-        &self,
-        data: web::Data<AppState>,
+        &self, 
         id: Uuid,
     ) -> Result<Region, super::WBError> {
         todo!()
     }
 
     async fn get_all(
-        &self,
-        data: web::Data<AppState>,
+        &self, 
         skip: i32,
         take: i32,
     ) -> Result<super::PagedSet<Region>, super::WBError> {

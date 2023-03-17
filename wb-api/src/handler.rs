@@ -27,9 +27,7 @@ pub async fn country_list_handler(
     let limit = opts.limit.unwrap_or(10);
     let offset = (opts.page.unwrap_or(1) - 1) * limit;
 
-    let cm = CountryManager::new();
-
-    let result = cm.get_all(data, offset as i32, limit as i32).await;
+    let result = data.country_manager.get_all(offset as i32, limit as i32).await;
 
     if result.is_err() {
         let message = "Something bad happened while fetching all countries";
@@ -41,7 +39,6 @@ pub async fn country_list_handler(
 
     let json_response = serde_json::json!({
         "status":"success",
-        "results": countries.results,
         "countries": countries
     });
 

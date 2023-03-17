@@ -28,24 +28,21 @@ pub struct CommunityManager {}
 #[async_trait]
 impl super::Manager<Community> for CommunityManager {
     async fn create(
-        &self,
-        data: web::Data<AppState>,
+        &self, 
         entity: Community,
     ) -> Result<Community, super::WBError> {
         todo!()
     }
 
     async fn get_by_id(
-        &self,
-        data: web::Data<AppState>,
+        &self, 
         id: Uuid,
     ) -> Result<Community, super::WBError> {
         todo!()
     }
 
     async fn get_all(
-        &self,
-        data: web::Data<AppState>,
+        &self, 
         skip: i32,
         take: i32,
     ) -> Result<super::PagedSet<Community>, super::WBError> {
