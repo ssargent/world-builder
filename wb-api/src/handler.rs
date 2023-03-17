@@ -27,15 +27,17 @@ pub async fn country_list_handler(
     let limit = opts.limit.unwrap_or(10);
     let offset = (opts.page.unwrap_or(1) - 1) * limit;
 
-    let result = data.country_manager.get_all(offset as i32, limit as i32).await;
-
-    if result.is_err() {
-        let message = "Something bad happened while fetching all countries";
-        return HttpResponse::InternalServerError()
-            .json(json!({"status": "error", "message": message}));
-    }
-
-    let countries = result.unwrap();
+    let countries = match data
+        .country_manager
+        .get_all(offset as i32, limit as i32)
+        .await
+    {
+        Ok(c) => c,
+        Err(err) => {
+            return HttpResponse::InternalServerError()
+                .json(json!({"status": "error", "message": err.to_string()}))
+        }
+    };
 
     let json_response = serde_json::json!({
         "status":"success",
@@ -53,26 +55,20 @@ pub async fn region_list_handler(
     let limit = opts.limit.unwrap_or(10);
     let offset = (opts.page.unwrap_or(1) - 1) * limit;
 
-    let query_result = sqlx::query_as!(
-        Region,
-        r#"select id, wbrn, region_name, country_id, created_at, updated_at from world.regions order by id limit $1 offset $2"#, 
-        limit as i32,
-        offset as i32
-    )
-    .fetch_all(&data.db)
-    .await;
-
-    if query_result.is_err() {
-        let message = "Something bad happened while fetching all regions";
-        return HttpResponse::InternalServerError()
-            .json(json!({"status": "error", "message": message}));
-    }
-
-    let regions = query_result.unwrap();
+    let regions = match data
+        .region_manager
+        .get_all(offset as i32, limit as i32)
+        .await
+    {
+        Ok(r) => r,
+        Err(err) => {
+            return HttpResponse::InternalServerError()
+                .json(json!({"status": "error", "message": err.to_string()}))
+        }
+    };
 
     let json_response = serde_json::json!({
         "status":"success",
-        "results": regions.len(),
         "regions": regions
     });
 
@@ -87,30 +83,21 @@ pub async fn community_list_handler(
     let limit = opts.limit.unwrap_or(10);
     let offset = (opts.page.unwrap_or(1) - 1) * limit;
 
-    let query_result = sqlx::query_as!(
-        Community,
-        r#"select * from world.communities order by id limit $1 offset $2"#,
-        limit as i32,
-        offset as i32
-    )
-    .fetch_all(&data.db)
-    .await;
-
-    if query_result.is_err() {
-        let message = "Something bad happened while fetching all communities";
-        return HttpResponse::InternalServerError()
-            .json(json!({"status": "error", "message": message}));
-    }
-
-    // let cm = CountryManager::new(data.db);
-
-    let communities = query_result.unwrap();
+    let communities = match data
+        .community_manager
+        .get_all(offset as i32, limit as i32)
+        .await
+    {
+        Ok(r) => r,
+        Err(err) => {
+            return HttpResponse::InternalServerError()
+                .json(json!({"status": "error", "message": err.to_string()}))
+        }
+    };
 
     let json_response = serde_json::json!({
         "status":"success",
-        "results": communities.len(),
         "communities": communities,
-        "specialMessage": "test",
     });
 
     HttpResponse::Ok().json(json_response)

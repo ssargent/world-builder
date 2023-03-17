@@ -1,23 +1,27 @@
-use std::sync::Arc;
+use serde::Deserialize;
+use sqlx::{Pool, Postgres};
 
-use serde::{Deserialize};
-use sqlx::{Postgres, Pool};
-
-use crate::worldbuilder::CountryManager;
+use crate::worldbuilder::{CommunityManager, CountryManager, RegionManager};
 
 // todo: Add RegionManager, CommunityManager and eventually EntityManager
 pub struct AppState {
     pub db: Pool<Postgres>,
     pub country_manager: CountryManager,
+    pub region_manager: RegionManager,
+    pub community_manager: CommunityManager,
 }
 
 impl AppState {
     pub fn init(pool: Pool<Postgres>) -> AppState {
-
         let cm = CountryManager::new(pool.clone());
+        let comu = CommunityManager::new(pool.clone());
+        let rm = RegionManager::new(pool.clone());
+
         AppState {
-            db:  pool,
+            db: pool,
             country_manager: cm,
+            community_manager: comu,
+            region_manager: rm,
         }
     }
 }

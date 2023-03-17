@@ -4,9 +4,9 @@ mod regions;
 
 use actix_web::web;
 use async_trait::async_trait;
-pub use communities::Community;
+pub use communities::{Community, CommunityManager};
 pub use countries::{Country, CountryManager};
-pub use regions::Region;
+pub use regions::{Region, RegionManager};
 
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -18,11 +18,8 @@ use crate::model::AppState;
 pub trait Manager<T> {
     async fn create(&self, entity: T) -> Result<T, WBError>;
     async fn get_by_id(&self, id: Uuid) -> Result<T, WBError>;
-    async fn get_all(
-        &self,
-        skip: i32,
-        take: i32,
-    ) -> Result<PagedSet<T>, WBError>;
+    async fn get_all(&self, skip: i32, take: i32) -> Result<PagedSet<T>, WBError>;
+    async fn get_by_wbn(&self, wbn: String) -> Result<T, WBError>;
 }
 #[derive(Serialize, Debug, Deserialize)]
 pub struct PagedSet<T> {

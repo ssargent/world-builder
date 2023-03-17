@@ -1,7 +1,7 @@
 use actix_web::web;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
+use sqlx::{FromRow, Pool, Postgres};
 use uuid::Uuid;
 
 use crate::model::AppState;
@@ -23,26 +23,31 @@ pub struct Community {
     pub updated_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
-pub struct CommunityManager {}
+pub struct CommunityManager {
+    db: Pool<Postgres>,
+}
+
+impl CommunityManager {
+    pub fn new(db: Pool<Postgres>) -> CommunityManager {
+        CommunityManager { db: db }
+    }
+}
 
 #[async_trait]
 impl super::Manager<Community> for CommunityManager {
-    async fn create(
-        &self, 
-        entity: Community,
-    ) -> Result<Community, super::WBError> {
+    async fn create(&self, entity: Community) -> Result<Community, super::WBError> {
         todo!()
     }
 
-    async fn get_by_id(
-        &self, 
-        id: Uuid,
-    ) -> Result<Community, super::WBError> {
+    async fn get_by_id(&self, id: Uuid) -> Result<Community, super::WBError> {
         todo!()
     }
 
+    async fn get_by_wbn(&self, wbn: String) -> Result<Community, super::WBError> {
+        todo!()
+    }
     async fn get_all(
-        &self, 
+        &self,
         skip: i32,
         take: i32,
     ) -> Result<super::PagedSet<Community>, super::WBError> {
