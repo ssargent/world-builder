@@ -1,6 +1,8 @@
 -- Add up migration script here
 create extension if not exists "uuid-ossp";
 
+create schema if not exists world;
+
 create table if not exists world.countries (
     id uuid not null default (uuid_generate_v4()),
     wbrn text not null,
