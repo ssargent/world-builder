@@ -44,10 +44,21 @@ impl super::Manager<Region> for RegionManager {
     }
 
     async fn get_by_id(&self, id: Uuid) -> Result<Region, super::WBError> {
-        todo!()
+        let region = match sqlx::query_as!(
+            Region,
+            r#"select id, wbrn, region_name, country_id, created_at, updated_at from world.regions where id = $1"#, 
+            id
+        )
+        .fetch_one(&self.db)
+        .await {
+            Ok(r) => r,
+            Err(err) => return Err(super::WBError::DatabaseError(err)),
+        };
+
+        Ok(region)
     }
 
-    async fn get_by_wbn(&self, wbn: String) -> Result<Region, super::WBError> {
+    async fn get_by_wbrn(&self, wbn: String) -> Result<Region, super::WBError> {
         todo!()
     }
 

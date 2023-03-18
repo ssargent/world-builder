@@ -43,9 +43,10 @@ impl super::Manager<Community> for CommunityManager {
         todo!()
     }
 
-    async fn get_by_wbn(&self, wbn: String) -> Result<Community, super::WBError> {
+    async fn get_by_wbrn(&self, wbn: String) -> Result<Community, super::WBError> {
         todo!()
     }
+
     async fn get_all(
         &self,
         skip: i32,

@@ -19,7 +19,7 @@ pub trait Manager<T> {
     async fn create(&self, entity: T) -> Result<T, WBError>;
     async fn get_by_id(&self, id: Uuid) -> Result<T, WBError>;
     async fn get_all(&self, skip: i32, take: i32) -> Result<PagedSet<T>, WBError>;
-    async fn get_by_wbn(&self, wbn: String) -> Result<T, WBError>;
+    async fn get_by_wbrn(&self, wbn: String) -> Result<T, WBError>;
 }
 #[derive(Serialize, Debug, Deserialize)]
 pub struct PagedSet<T> {

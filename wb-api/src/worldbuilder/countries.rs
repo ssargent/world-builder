@@ -46,7 +46,7 @@ impl super::Manager<Country> for CountryManager {
         todo!()
     }
 
-    async fn get_by_wbn(&self, wbn: String) -> Result<Country, super::WBError> {
+    async fn get_by_wbrn(&self, wbn: String) -> Result<Country, super::WBError> {
         todo!()
     }
 
