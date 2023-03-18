@@ -36,7 +36,7 @@ select uuid_generate_v5(
     uuid_generate_v5(uuid_ns_url(), '/v1/types/region'),
     uuid_generate_v5(
         uuid_ns_url(),
-        '/v1/worlds/ktos'
+        '/v1/countries/' || lower(country_name)
     ),
     'wb:ktos:' || lower(c.country_name) || ':' || replace(lower(r.region_name), ' ', '-'),
     region_name,
