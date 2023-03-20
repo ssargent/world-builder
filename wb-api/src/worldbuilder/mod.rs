@@ -1,5 +1,6 @@
 mod communities;
 mod countries;
+mod entities;
 mod regions;
 
 use actix_web::web;
@@ -21,6 +22,7 @@ pub trait Manager<T> {
     async fn get_all(&self, skip: i32, take: i32) -> Result<PagedSet<T>, WBError>;
     async fn get_by_wbrn(&self, wbn: String) -> Result<T, WBError>;
 }
+
 #[derive(Serialize, Debug, Deserialize)]
 pub struct PagedSet<T> {
     pub items: Vec<T>,

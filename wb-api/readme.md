@@ -2,6 +2,17 @@
 
 World Builder API 
 
+## Prerequisites
+
+1. Postgres installed and running (can be via docker)
+2. .env file created (copy .env.sample, change required info)
+
+## Quick Start
+
+```
+you@computer: ~/source/github/ssargent/world-builder/wb-api$ make watch
+```
+
 ## Types 
 
 The world is made up of entities, and entities have types (Person, Place, Boat). 
