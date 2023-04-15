@@ -7,6 +7,7 @@ use actix_web::web;
 use async_trait::async_trait;
 pub use communities::{Community, CommunityManager};
 pub use countries::{Country, CountryManager};
+pub use entities::{Entity, EntityManager, EntityManagerImpl};
 pub use regions::{Region, RegionManager};
 
 use serde::{Deserialize, Serialize};

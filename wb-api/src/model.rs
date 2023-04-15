@@ -1,7 +1,9 @@
 use serde::Deserialize;
 use sqlx::{Pool, Postgres};
 
-use crate::worldbuilder::{CommunityManager, CountryManager, RegionManager};
+use crate::worldbuilder::{
+    CommunityManager, CountryManager, EntityManager, EntityManagerImpl, RegionManager,
+};
 
 // todo: Add RegionManager, CommunityManager and eventually EntityManager
 pub struct AppState {
@@ -9,6 +11,7 @@ pub struct AppState {
     pub country_manager: CountryManager,
     pub region_manager: RegionManager,
     pub community_manager: CommunityManager,
+    pub entity_manager: EntityManagerImpl,
 }
 
 impl AppState {
@@ -16,12 +19,14 @@ impl AppState {
         let cm = CountryManager::new(pool.clone());
         let comu = CommunityManager::new(pool.clone());
         let rm = RegionManager::new(pool.clone());
+        let em: EntityManagerImpl = EntityManagerImpl::new(pool.clone());
 
         AppState {
             db: pool,
             country_manager: cm,
             community_manager: comu,
             region_manager: rm,
+            entity_manager: em,
         }
     }
 }
