@@ -1,33 +1,27 @@
-use serde::Deserialize;
-use sqlx::{Pool, Postgres};
+use std::sync::Arc;
 
-use crate::worldbuilder::{
-    CommunityManager, CountryManager, EntityManager, EntityManagerImpl, RegionManager,
-};
+use actix_web::{web::Json, HttpRequest, HttpResponse, Responder};
+use futures_util::future::Ready;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+
+  
+use sqlx::{Pool, Postgres};
+use uuid::Uuid;
+use crate::worldbuilder::service::Service;
 
 // todo: Add RegionManager, CommunityManager and eventually EntityManager
 pub struct AppState {
     pub db: Pool<Postgres>,
-    pub country_manager: CountryManager,
-    pub region_manager: RegionManager,
-    pub community_manager: CommunityManager,
-    pub entity_manager: EntityManagerImpl,
+    pub service: Arc<Service>,
 }
 
 impl AppState {
-    pub fn init(pool: Pool<Postgres>) -> AppState {
-        let cm = CountryManager::new(pool.clone());
-        let comu = CommunityManager::new(pool.clone());
-        let rm = RegionManager::new(pool.clone());
-        let em: EntityManagerImpl = EntityManagerImpl::new(pool.clone());
-
+    pub fn init(pool: Pool<Postgres>, service: Arc<Service>) -> AppState {
         AppState {
             db: pool,
-            country_manager: cm,
-            community_manager: comu,
-            region_manager: rm,
-            entity_manager: em,
-        }
+            service: service,
+       }
     }
 }
 
@@ -43,4 +37,33 @@ pub struct UpdateTodoSchema {
     pub title: Option<String>,
     pub content: Option<String>,
     pub completed: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateEntity {
+    pub wbtn: String,
+    pub parent: String,
+    pub entity_name: String,
+    pub entity_description: String,
+
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[allow(non_snake_case)]
+pub struct Entity {
+    pub id: Uuid,
+    #[serde(rename = "typeId")]
+    pub type_id: Uuid,
+    #[serde(rename = "parentId")]
+    pub parent_id: Uuid,
+    pub wbrn: String,
+    #[serde(rename = "entityName")]
+    pub entity_name: String,
+    #[serde(rename = "entityDescription")]
+    pub entity_description: String,
+    pub notes: Option<String>,
+    #[serde(rename = "createdAt")]
+    pub created_at: Option<chrono::DateTime<chrono::Utc>>,
+    #[serde(rename = "updatedAt")]
+    pub updated_at: Option<chrono::DateTime<chrono::Utc>>,
 }

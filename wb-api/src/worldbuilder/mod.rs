@@ -1,28 +1,13 @@
-mod communities;
-mod countries;
-mod entities;
-mod regions;
+pub mod entities;
+pub mod service;
+pub mod repository;
 
-use actix_web::web;
-use async_trait::async_trait;
-pub use communities::{Community, CommunityManager};
-pub use countries::{Country, CountryManager};
-pub use entities::{Entity, EntityManager, EntityManagerImpl};
-pub use regions::{Region, RegionManager};
+
+use async_trait::async_trait; 
 
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use uuid::Uuid;
-
-use crate::model::AppState;
-
-#[async_trait]
-pub trait Manager<T> {
-    async fn create(&self, entity: T) -> Result<T, WBError>;
-    async fn get_by_id(&self, id: Uuid) -> Result<T, WBError>;
-    async fn get_all(&self, skip: i32, take: i32) -> Result<PagedSet<T>, WBError>;
-    async fn get_by_wbrn(&self, wbn: String) -> Result<T, WBError>;
-}
 
 #[derive(Serialize, Debug, Deserialize)]
 pub struct PagedSet<T> {
