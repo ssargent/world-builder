@@ -1,0 +1,14 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "world-builder",
+            "group": "local servers",
+            "database": "world-builder-dev",
+            "username": "wb"
+        }
+    ]
+}
