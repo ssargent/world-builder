@@ -2,7 +2,10 @@ module github.com/ssargent/world-builder/wb-api-go
 
 go 1.20
 
-require github.com/spf13/cobra v1.7.0
+require (
+	github.com/jmoiron/sqlx v1.3.5
+	github.com/spf13/cobra v1.7.0
+)
 
 require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
