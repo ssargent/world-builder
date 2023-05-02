@@ -4,12 +4,22 @@ mod response;
 mod schema;
 mod worldbuilder;
 
+mod errors;
+
+pub mod db;
+
+pub mod config;
+
+use std::sync::Arc;
+
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
 use actix_web::{http::header, web, App, HttpServer};
 use model::AppState;
 use sqlx::postgres::PgPoolOptions;
 use dotenv::dotenv;
+
+use crate::worldbuilder::service::Service;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -33,8 +43,12 @@ async fn main() -> std::io::Result<()> {
         }
     };
 
-    let database = AppState::init(pool.clone());
-    let app_data = web::Data::new(database);
+    let entity_service = Arc::new(Service::new(
+        pool.clone(),
+    ));
+
+    let app_state = AppState::init(pool.clone(), entity_service);
+    let app_data = web::Data::new(app_state);
 
     println!("🚀 Server started successfully");
 
