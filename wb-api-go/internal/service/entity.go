@@ -3,6 +3,8 @@ package service
 import (
 	"github.com/google/uuid"
 	"github.com/ssargent/world-builder/wb-api-go/pkg/entities"
+
+	. "github.com/ssargent/world-builder/wb-api-go/internal/drivers"
 )
 
 type EntityService struct {
