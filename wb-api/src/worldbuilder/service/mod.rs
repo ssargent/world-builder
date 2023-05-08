@@ -1,12 +1,9 @@
-
-use std::{collections::HashSet, fmt::Debug, sync::Arc};
-use  uuid::Uuid;
-
 use crate::db;
 
 use super::repository::Repository;
 
 mod create_entity;
+mod get_entity;
 
 #[derive(Debug, Clone)]
 pub struct CreateEntityInput {
@@ -25,9 +22,6 @@ pub struct Service {
 impl Service {
     pub fn new(db: db::DB) -> Service {
         let repo = Repository::new();
-        Service {
-            db,
-            repo,
-        }
+        Service { db, repo }
     }
 }

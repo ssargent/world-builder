@@ -1,8 +1,8 @@
 mod create_entity;
-mod get_entity;
+mod find_entity_by_wbrn;
 mod find_type_by_name;
 mod find_type_by_wbtn;
-mod find_entity_by_wbrn;
+mod get_entity;
 
 #[derive(Debug)]
 pub struct Repository {}

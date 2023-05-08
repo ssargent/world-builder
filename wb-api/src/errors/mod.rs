@@ -1,8 +1,7 @@
+use sqlx;
 use thiserror::Error;
-use sqlx; 
 
 pub(crate) mod worldbuilder;
- 
 
 // pub type Error = Box<dyn std::error::Error>;
 // pub type Error = anyhow::Error;
@@ -63,7 +62,6 @@ impl std::convert::From<std::num::ParseIntError> for Error {
         Error::InvalidArgument(err.to_string())
     }
 }
- 
 
 impl std::convert::From<std::str::ParseBoolError> for Error {
     fn from(err: std::str::ParseBoolError) -> Self {
@@ -76,7 +74,7 @@ impl std::convert::From<serde_json::Error> for Error {
         Error::InvalidArgument(err.to_string())
     }
 }
- 
+
 impl std::convert::From<std::string::FromUtf8Error> for Error {
     fn from(err: std::string::FromUtf8Error) -> Self {
         Error::Internal(err.to_string())

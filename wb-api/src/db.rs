@@ -1,7 +1,7 @@
 use crate::config;
-use std::{time::Duration, error};
-use log::error;
 use crate::errors::Error;
+use log::error;
+use std::time::Duration;
 
 use sqlx::{self, postgres::PgPoolOptions, Executor, Pool, Postgres, Transaction};
 

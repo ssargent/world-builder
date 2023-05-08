@@ -1,8 +1,6 @@
-
-use serde::{Serialize, Deserialize};
-use url::Url;
 use crate::errors::Error;
-
+use serde::{Deserialize, Serialize};
+use url::Url;
 
 const ENV_DATABASE_URL: &str = "DATABASE_URL";
 const ENV_DATABASE_POOL_SIZE: &str = "DATABASE_POOL_SIZE";
@@ -14,7 +12,7 @@ const POSTGRES_SCHEME: &str = "postgres";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
-//    pub http: Http,
+    //    pub http: Http,
     pub database: Database,
 }
 
@@ -33,23 +31,24 @@ impl Config {
         dotenv::dotenv().ok();
 
         // http
-/*        let http_port = std::env::var(ENV_HTTP_PORT)
-            .ok()
-            .map_or(Ok(DEFAULT_HTTP_PORT), |env_val| env_val.parse::<u16>())?;
-        let http_access_logs = std::env::var(ENV_HTTP_ACCESS_LOGS)
-            .ok()
-            .map_or(Ok(DEFAULT_ACCESS_LOGS), |env_val| env_val.parse::<bool>())?;
-        let http_public_directory =
-            std::env::var(ENV_HTTP_PUBLIC_DIRECTORY).unwrap_or(String::from(DEFAULT_HTTP_PUBLIC_DIRECTORY));
+        /*        let http_port = std::env::var(ENV_HTTP_PORT)
+                   .ok()
+                   .map_or(Ok(DEFAULT_HTTP_PORT), |env_val| env_val.parse::<u16>())?;
+               let http_access_logs = std::env::var(ENV_HTTP_ACCESS_LOGS)
+                   .ok()
+                   .map_or(Ok(DEFAULT_ACCESS_LOGS), |env_val| env_val.parse::<bool>())?;
+               let http_public_directory =
+                   std::env::var(ENV_HTTP_PUBLIC_DIRECTORY).unwrap_or(String::from(DEFAULT_HTTP_PUBLIC_DIRECTORY));
 
-        let http = Http {
-            port: http_port,
-            access_logs: http_access_logs,
-            public_directory: http_public_directory,
-        };
- */
+               let http = Http {
+                   port: http_port,
+                   access_logs: http_access_logs,
+                   public_directory: http_public_directory,
+               };
+        */
         // database
-        let database_url = std::env::var(ENV_DATABASE_URL).map_err(|_| env_not_found(ENV_DATABASE_URL))?;
+        let database_url =
+            std::env::var(ENV_DATABASE_URL).map_err(|_| env_not_found(ENV_DATABASE_URL))?;
         let database_pool_size = std::env::var(ENV_DATABASE_POOL_SIZE)
             .ok()
             .map_or(Ok(DEFAULT_DATABASE_POOL_SIZE), |pool_size_str| {
@@ -62,7 +61,7 @@ impl Config {
         };
 
         let mut config = Config {
-  //          http,
+            //          http,
             database,
         };
 

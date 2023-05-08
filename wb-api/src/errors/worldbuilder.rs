@@ -1,10 +1,9 @@
-
 #[derive(Debug)]
 pub enum Error {
     Internal,
     NotFound,
     EntityNotFound,
-    TypeNotFound
+    TypeNotFound,
 }
 
 impl std::convert::From<Error> for crate::errors::Error {
@@ -13,9 +12,11 @@ impl std::convert::From<Error> for crate::errors::Error {
             // Types
             Error::TypeNotFound => crate::errors::Error::NotFound(String::from("type not found")),
             // Entities
-            Error::EntityNotFound => crate::errors::Error::NotFound(String::from("entity not found.")),
+            Error::EntityNotFound => {
+                crate::errors::Error::NotFound(String::from("entity not found."))
+            }
             Error::NotFound => crate::errors::Error::NotFound(String::new()),
-            Error::Internal =>  crate::errors::Error::Internal(String::new()),
+            Error::Internal => crate::errors::Error::Internal(String::new()),
         }
     }
 }

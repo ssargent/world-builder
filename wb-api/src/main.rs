@@ -15,9 +15,9 @@ use std::sync::Arc;
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
 use actix_web::{http::header, web, App, HttpServer};
+use dotenv::dotenv;
 use model::AppState;
 use sqlx::postgres::PgPoolOptions;
-use dotenv::dotenv;
 
 use crate::worldbuilder::service::Service;
 
@@ -31,7 +31,10 @@ async fn main() -> std::io::Result<()> {
     env_logger::init();
 
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let pool = match PgPoolOptions::new().max_connections(10).connect(&database_url).await
+    let pool = match PgPoolOptions::new()
+        .max_connections(10)
+        .connect(&database_url)
+        .await
     {
         Ok(pool) => {
             println!("✅Connection to the database is successful!");
@@ -43,9 +46,7 @@ async fn main() -> std::io::Result<()> {
         }
     };
 
-    let entity_service = Arc::new(Service::new(
-        pool.clone(),
-    ));
+    let entity_service = Arc::new(Service::new(pool.clone()));
 
     let app_state = AppState::init(pool.clone(), entity_service);
     let app_data = web::Data::new(app_state);
@@ -54,15 +55,15 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         let cors = Cors::default()
-        .allowed_origin("http://localhost:3000")
-        .allowed_origin("http://localhost:3000/")
-        .allowed_methods(vec!["GET", "POST"])
-        .allowed_headers(vec![
-            header::CONTENT_TYPE,
-            header::AUTHORIZATION,
-            header::ACCEPT,
-        ])
-        .supports_credentials();
+            .allowed_origin("http://localhost:3000")
+            .allowed_origin("http://localhost:3000/")
+            .allowed_methods(vec!["GET", "POST"])
+            .allowed_headers(vec![
+                header::CONTENT_TYPE,
+                header::AUTHORIZATION,
+                header::ACCEPT,
+            ])
+            .supports_credentials();
 
         App::new()
             .app_data(app_data.clone())

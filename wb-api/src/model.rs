@@ -1,14 +1,10 @@
 use std::sync::Arc;
 
-use actix_web::{web::Json, HttpRequest, HttpResponse, Responder};
-use futures_util::future::Ready;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
-  
+use crate::worldbuilder::service::Service;
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
-use crate::worldbuilder::service::Service;
 
 // todo: Add RegionManager, CommunityManager and eventually EntityManager
 pub struct AppState {
@@ -21,7 +17,7 @@ impl AppState {
         AppState {
             db: pool,
             service: service,
-       }
+        }
     }
 }
 
@@ -45,7 +41,6 @@ pub struct CreateEntity {
     pub parent: String,
     pub entity_name: String,
     pub entity_description: String,
-
 }
 
 #[derive(Debug, Deserialize, Serialize)]

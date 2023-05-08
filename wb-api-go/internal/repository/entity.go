@@ -2,7 +2,6 @@ package repository
 
 import (
 	"github.com/google/uuid"
-	. "github.com/ssargent/world-builder/wb-api-go/internal/drivers"
 	"github.com/ssargent/world-builder/wb-api-go/pkg/entities"
 )
 
