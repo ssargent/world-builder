@@ -33,6 +33,16 @@ async fn get_entity_handler(
     Ok(HttpResponse::Ok().json(res))
 }
 
+#[get("entities/rn/{name}")]
+async fn get_entity_by_wbrn_handler(
+    state: web::Data<AppState>,
+    wbrn: web::Path<String>,
+) -> Result<HttpResponse, errors::Error> {
+    print!("wbrn := {}\n", wbrn);
+    let res = state.service.get_entity_by_wbrn(wbrn.into_inner()).await?;
+    Ok(HttpResponse::Ok().json(res))
+}
+
 #[post("entities")]
 async fn create_entity_handler(
     state: web::Data<AppState>,
@@ -69,7 +79,8 @@ pub fn config(conf: &mut web::ServiceConfig) {
     let scope = web::scope("/api")
         .service(health_checker_handler)
         .service(create_entity_handler)
-        .service(get_entity_handler);
+        .service(get_entity_handler)
+        .service(get_entity_by_wbrn_handler);
 
     conf.service(scope);
 }

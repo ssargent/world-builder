@@ -18,3 +18,7 @@ func NewEntityService(db repository.DB) *EntityService {
 func (e *EntityService) FindByID(id uuid.UUID) (*entities.Entity, error) {
 	return e.repository.FindByID(e.db, id)
 }
+
+func (e *EntityService) UpdateByID(id uuid.UUID) (*entities.Entity, error) {
+	return nil, nil
+}
