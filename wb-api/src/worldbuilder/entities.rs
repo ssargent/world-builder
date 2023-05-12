@@ -25,7 +25,6 @@ pub struct Type {
     pub type_description: String,
     pub created_at: Option<chrono::DateTime<chrono::Utc>>,
     pub updated_at: Option<chrono::DateTime<chrono::Utc>>,
-    pub attributes: Vec<AttributeDefinition>,
 }
 
 #[derive(Debug, FromRow, Deserialize, Serialize)]
