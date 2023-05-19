@@ -31,3 +31,19 @@ insert into world.attribute_definitions
 values
 ($1, $2, $3, $4)
 returning *;
+
+-- name: GetEntityByWBRN :one
+select e.* from world.entities e
+where e.wbrn = $1;
+
+-- name: GetEntitiesByWBRN :many
+select e.* from world.entities e
+where e.wbrn like $1;
+
+-- name: CreateEntity :one
+insert into world.entities
+(id, type_id, parent_id, wbrn, entity_name, entity_description, notes)
+values 
+($1, $2, $3, $4, $5, $6, $7)
+returning *;
+

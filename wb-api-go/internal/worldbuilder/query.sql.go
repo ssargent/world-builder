@@ -46,6 +46,49 @@ func (q *Queries) CreateAttributeDefinition(ctx context.Context, db DBTX, arg *C
 	return &i, err
 }
 
+const createEntity = `-- name: CreateEntity :one
+insert into world.entities
+(id, type_id, parent_id, wbrn, entity_name, entity_description, notes)
+values 
+($1, $2, $3, $4, $5, $6, $7)
+returning id, type_id, parent_id, wbrn, entity_name, entity_description, notes, created_at, updated_at
+`
+
+type CreateEntityParams struct {
+	ID                pgtype.UUID `json:"id"`
+	TypeID            pgtype.UUID `json:"type_id"`
+	ParentID          pgtype.UUID `json:"parent_id"`
+	Wbrn              string      `json:"wbrn"`
+	EntityName        string      `json:"entity_name"`
+	EntityDescription string      `json:"entity_description"`
+	Notes             pgtype.Text `json:"notes"`
+}
+
+func (q *Queries) CreateEntity(ctx context.Context, db DBTX, arg *CreateEntityParams) (*WorldEntity, error) {
+	row := db.QueryRow(ctx, createEntity,
+		arg.ID,
+		arg.TypeID,
+		arg.ParentID,
+		arg.Wbrn,
+		arg.EntityName,
+		arg.EntityDescription,
+		arg.Notes,
+	)
+	var i WorldEntity
+	err := row.Scan(
+		&i.ID,
+		&i.TypeID,
+		&i.ParentID,
+		&i.Wbrn,
+		&i.EntityName,
+		&i.EntityDescription,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
 const createType = `-- name: CreateType :one
 insert into world.types
 (parent_id, wbtn, type_name, type_description)
@@ -117,6 +160,41 @@ func (q *Queries) GetAttributesForType(ctx context.Context, db DBTX, typeID pgty
 	return items, nil
 }
 
+const getEntitiesByWBRN = `-- name: GetEntitiesByWBRN :many
+select e.id, e.type_id, e.parent_id, e.wbrn, e.entity_name, e.entity_description, e.notes, e.created_at, e.updated_at from world.entities e
+where e.wbrn like $1
+`
+
+func (q *Queries) GetEntitiesByWBRN(ctx context.Context, db DBTX, wbrn string) ([]*WorldEntity, error) {
+	rows, err := db.Query(ctx, getEntitiesByWBRN, wbrn)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*WorldEntity
+	for rows.Next() {
+		var i WorldEntity
+		if err := rows.Scan(
+			&i.ID,
+			&i.TypeID,
+			&i.ParentID,
+			&i.Wbrn,
+			&i.EntityName,
+			&i.EntityDescription,
+			&i.Notes,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getEntityAttributes = `-- name: GetEntityAttributes :many
 select id, entity_id, attribute_id, attribute_value, created_at, updated_at from 
 world.entity_attributes 
@@ -148,6 +226,28 @@ func (q *Queries) GetEntityAttributes(ctx context.Context, db DBTX, entityID pgt
 		return nil, err
 	}
 	return items, nil
+}
+
+const getEntityByWBRN = `-- name: GetEntityByWBRN :one
+select e.id, e.type_id, e.parent_id, e.wbrn, e.entity_name, e.entity_description, e.notes, e.created_at, e.updated_at from world.entities e
+where e.wbrn = $1
+`
+
+func (q *Queries) GetEntityByWBRN(ctx context.Context, db DBTX, wbrn string) (*WorldEntity, error) {
+	row := db.QueryRow(ctx, getEntityByWBRN, wbrn)
+	var i WorldEntity
+	err := row.Scan(
+		&i.ID,
+		&i.TypeID,
+		&i.ParentID,
+		&i.Wbrn,
+		&i.EntityName,
+		&i.EntityDescription,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
 }
 
 const getTypeByID = `-- name: GetTypeByID :one
