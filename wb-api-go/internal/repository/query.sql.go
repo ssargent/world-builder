@@ -3,12 +3,13 @@
 //   sqlc v1.18.0
 // source: query.sql
 
-package worldbuilder
+package repository
 
 import (
 	"context"
+	"database/sql"
 
-	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/google/uuid"
 )
 
 const createAttributeDefinition = `-- name: CreateAttributeDefinition :one
@@ -27,7 +28,7 @@ type CreateAttributeDefinitionParams struct {
 }
 
 func (q *Queries) CreateAttributeDefinition(ctx context.Context, db DBTX, arg *CreateAttributeDefinitionParams) (*WorldAttributeDefinition, error) {
-	row := db.QueryRow(ctx, createAttributeDefinition,
+	row := db.QueryRowContext(ctx, createAttributeDefinition,
 		arg.Wbatn,
 		arg.AttributeName,
 		arg.Label,
@@ -55,17 +56,17 @@ returning id, type_id, parent_id, wbrn, entity_name, entity_description, notes, 
 `
 
 type CreateEntityParams struct {
-	ID                pgtype.UUID `json:"id"`
-	TypeID            pgtype.UUID `json:"type_id"`
-	ParentID          pgtype.UUID `json:"parent_id"`
-	Wbrn              string      `json:"wbrn"`
-	EntityName        string      `json:"entity_name"`
-	EntityDescription string      `json:"entity_description"`
-	Notes             pgtype.Text `json:"notes"`
+	ID                uuid.UUID      `json:"id"`
+	TypeID            uuid.UUID      `json:"type_id"`
+	ParentID          uuid.UUID      `json:"parent_id"`
+	Wbrn              string         `json:"wbrn"`
+	EntityName        string         `json:"entity_name"`
+	EntityDescription string         `json:"entity_description"`
+	Notes             sql.NullString `json:"notes"`
 }
 
 func (q *Queries) CreateEntity(ctx context.Context, db DBTX, arg *CreateEntityParams) (*WorldEntity, error) {
-	row := db.QueryRow(ctx, createEntity,
+	row := db.QueryRowContext(ctx, createEntity,
 		arg.ID,
 		arg.TypeID,
 		arg.ParentID,
@@ -98,14 +99,14 @@ returning id, parent_id, wbtn, type_name, type_description, created_at, updated_
 `
 
 type CreateTypeParams struct {
-	ParentID        pgtype.UUID `json:"parent_id"`
-	Wbtn            string      `json:"wbtn"`
-	TypeName        string      `json:"type_name"`
-	TypeDescription string      `json:"type_description"`
+	ParentID        uuid.UUID `json:"parent_id"`
+	Wbtn            string    `json:"wbtn"`
+	TypeName        string    `json:"type_name"`
+	TypeDescription string    `json:"type_description"`
 }
 
 func (q *Queries) CreateType(ctx context.Context, db DBTX, arg *CreateTypeParams) (*WorldType, error) {
-	row := db.QueryRow(ctx, createType,
+	row := db.QueryRowContext(ctx, createType,
 		arg.ParentID,
 		arg.Wbtn,
 		arg.TypeName,
@@ -132,8 +133,8 @@ inner join world.types t on t.id = ta.type_id
 where ta.type_id = $1
 `
 
-func (q *Queries) GetAttributesForType(ctx context.Context, db DBTX, typeID pgtype.UUID) ([]*WorldAttributeDefinition, error) {
-	rows, err := db.Query(ctx, getAttributesForType, typeID)
+func (q *Queries) GetAttributesForType(ctx context.Context, db DBTX, typeID uuid.UUID) ([]*WorldAttributeDefinition, error) {
+	rows, err := db.QueryContext(ctx, getAttributesForType, typeID)
 	if err != nil {
 		return nil, err
 	}
@@ -154,6 +155,9 @@ func (q *Queries) GetAttributesForType(ctx context.Context, db DBTX, typeID pgty
 		}
 		items = append(items, &i)
 	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -166,7 +170,7 @@ where e.wbrn like $1
 `
 
 func (q *Queries) GetEntitiesByWBRN(ctx context.Context, db DBTX, wbrn string) ([]*WorldEntity, error) {
-	rows, err := db.Query(ctx, getEntitiesByWBRN, wbrn)
+	rows, err := db.QueryContext(ctx, getEntitiesByWBRN, wbrn)
 	if err != nil {
 		return nil, err
 	}
@@ -189,6 +193,9 @@ func (q *Queries) GetEntitiesByWBRN(ctx context.Context, db DBTX, wbrn string) (
 		}
 		items = append(items, &i)
 	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -201,8 +208,8 @@ world.entity_attributes
 where entity_id = $1
 `
 
-func (q *Queries) GetEntityAttributes(ctx context.Context, db DBTX, entityID pgtype.UUID) ([]*WorldEntityAttribute, error) {
-	rows, err := db.Query(ctx, getEntityAttributes, entityID)
+func (q *Queries) GetEntityAttributes(ctx context.Context, db DBTX, entityID uuid.UUID) ([]*WorldEntityAttribute, error) {
+	rows, err := db.QueryContext(ctx, getEntityAttributes, entityID)
 	if err != nil {
 		return nil, err
 	}
@@ -222,6 +229,9 @@ func (q *Queries) GetEntityAttributes(ctx context.Context, db DBTX, entityID pgt
 		}
 		items = append(items, &i)
 	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -234,7 +244,7 @@ where e.wbrn = $1
 `
 
 func (q *Queries) GetEntityByWBRN(ctx context.Context, db DBTX, wbrn string) (*WorldEntity, error) {
-	row := db.QueryRow(ctx, getEntityByWBRN, wbrn)
+	row := db.QueryRowContext(ctx, getEntityByWBRN, wbrn)
 	var i WorldEntity
 	err := row.Scan(
 		&i.ID,
@@ -255,8 +265,8 @@ select id, parent_id, wbtn, type_name, type_description, created_at, updated_at 
 where id = $1
 `
 
-func (q *Queries) GetTypeByID(ctx context.Context, db DBTX, id pgtype.UUID) (*WorldType, error) {
-	row := db.QueryRow(ctx, getTypeByID, id)
+func (q *Queries) GetTypeByID(ctx context.Context, db DBTX, id uuid.UUID) (*WorldType, error) {
+	row := db.QueryRowContext(ctx, getTypeByID, id)
 	var i WorldType
 	err := row.Scan(
 		&i.ID,
@@ -276,7 +286,7 @@ where wbtn = $1
 `
 
 func (q *Queries) GetTypeByWBTN(ctx context.Context, db DBTX, wbtn string) (*WorldType, error) {
-	row := db.QueryRow(ctx, getTypeByWBTN, wbtn)
+	row := db.QueryRowContext(ctx, getTypeByWBTN, wbtn)
 	var i WorldType
 	err := row.Scan(
 		&i.ID,
