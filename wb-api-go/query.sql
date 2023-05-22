@@ -47,3 +47,14 @@ values
 ($1, $2, $3, $4, $5, $6, $7)
 returning *;
 
+-- name: GetEntityAssociationsForEntity :many
+select id, entity_one, entity_two, type_id, effective_start_date, effective_end_date
+from world.entity_associations
+where (entity_one = $1 or entity_two = $1);
+
+-- name: CreateEntityAssociation :one
+insert into world.entity_associations
+(entity_one, entity_two, type_id, effective_start_date, effective_end_date)
+values 
+($1, $2, $3, $4, $5) 
+returning *;

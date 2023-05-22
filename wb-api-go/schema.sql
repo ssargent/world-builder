@@ -92,3 +92,16 @@ CREATE TABLE IF NOT EXISTS world.type_attributes
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
 );
+
+create table if not exists world.entity_associations (
+    id uuid not null default uuid_generate_v4(),
+    entity_one uuid not null,
+    entity_two uuid not null,
+    type_id uuid not null,
+    effective_start_date timestamp with time zone default now(),
+    effective_end_date timestamp with time zone,
+    constraint pk_entityassociations_id primary key (id),
+    constraint fk_entityassociations_entities_one foreign key (entity_one) references world.entities (id),
+    constraint fk_entityassociations_entities_two foreign key (entity_two) references world.entities (id),
+    constraint fk_entityassociations_types foreign key (type_id) references world.types (id)
+);

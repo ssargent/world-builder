@@ -32,6 +32,15 @@ type WorldEntity struct {
 	UpdatedAt         sql.NullTime   `json:"updated_at"`
 }
 
+type WorldEntityAssociation struct {
+	ID                 uuid.UUID    `json:"id"`
+	EntityOne          uuid.UUID    `json:"entity_one"`
+	EntityTwo          uuid.UUID    `json:"entity_two"`
+	TypeID             uuid.UUID    `json:"type_id"`
+	EffectiveStartDate sql.NullTime `json:"effective_start_date"`
+	EffectiveEndDate   sql.NullTime `json:"effective_end_date"`
+}
+
 type WorldEntityAttribute struct {
 	ID             uuid.UUID    `json:"id"`
 	EntityID       uuid.UUID    `json:"entity_id"`
@@ -57,4 +66,3 @@ type WorldTypeAttribute struct {
 	Ordinal     int32     `json:"ordinal"`
 	IsRequired  bool      `json:"is_required"`
 }
-

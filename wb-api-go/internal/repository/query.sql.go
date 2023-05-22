@@ -90,6 +90,42 @@ func (q *Queries) CreateEntity(ctx context.Context, db DBTX, arg *CreateEntityPa
 	return &i, err
 }
 
+const createEntityAssociation = `-- name: CreateEntityAssociation :one
+insert into world.entity_associations
+(entity_one, entity_two, type_id, effective_start_date, effective_end_date)
+values 
+($1, $2, $3, $4, $5) 
+returning id, entity_one, entity_two, type_id, effective_start_date, effective_end_date
+`
+
+type CreateEntityAssociationParams struct {
+	EntityOne          uuid.UUID    `json:"entity_one"`
+	EntityTwo          uuid.UUID    `json:"entity_two"`
+	TypeID             uuid.UUID    `json:"type_id"`
+	EffectiveStartDate sql.NullTime `json:"effective_start_date"`
+	EffectiveEndDate   sql.NullTime `json:"effective_end_date"`
+}
+
+func (q *Queries) CreateEntityAssociation(ctx context.Context, db DBTX, arg *CreateEntityAssociationParams) (*WorldEntityAssociation, error) {
+	row := db.QueryRowContext(ctx, createEntityAssociation,
+		arg.EntityOne,
+		arg.EntityTwo,
+		arg.TypeID,
+		arg.EffectiveStartDate,
+		arg.EffectiveEndDate,
+	)
+	var i WorldEntityAssociation
+	err := row.Scan(
+		&i.ID,
+		&i.EntityOne,
+		&i.EntityTwo,
+		&i.TypeID,
+		&i.EffectiveStartDate,
+		&i.EffectiveEndDate,
+	)
+	return &i, err
+}
+
 const createType = `-- name: CreateType :one
 insert into world.types
 (parent_id, wbtn, type_name, type_description)
@@ -188,6 +224,42 @@ func (q *Queries) GetEntitiesByWBRN(ctx context.Context, db DBTX, wbrn string) (
 			&i.Notes,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getEntityAssociationsForEntity = `-- name: GetEntityAssociationsForEntity :many
+select id, entity_one, entity_two, type_id, effective_start_date, effective_end_date
+from world.entity_associations
+where (entity_one = $1 or entity_two = $1)
+`
+
+func (q *Queries) GetEntityAssociationsForEntity(ctx context.Context, db DBTX, entityOne uuid.UUID) ([]*WorldEntityAssociation, error) {
+	rows, err := db.QueryContext(ctx, getEntityAssociationsForEntity, entityOne)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*WorldEntityAssociation
+	for rows.Next() {
+		var i WorldEntityAssociation
+		if err := rows.Scan(
+			&i.ID,
+			&i.EntityOne,
+			&i.EntityTwo,
+			&i.TypeID,
+			&i.EffectiveStartDate,
+			&i.EffectiveEndDate,
 		); err != nil {
 			return nil, err
 		}
