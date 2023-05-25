@@ -32,6 +32,10 @@ values
 ($1, $2, $3, $4)
 returning *;
 
+-- name: GetEntity :one
+select e.* from world.entities e where id = $1;
+
+
 -- name: GetEntityByWBRN :one
 select e.* from world.entities e
 where e.wbrn = $1;
@@ -39,6 +43,10 @@ where e.wbrn = $1;
 -- name: GetEntitiesByWBRN :many
 select e.* from world.entities e
 where e.wbrn like $1;
+
+-- name: GetEntitiesByParent :many
+select e.* from world.entities e
+where e.parent_id = $1;
 
 -- name: CreateEntity :one
 insert into world.entities
@@ -58,3 +66,31 @@ insert into world.entity_associations
 values 
 ($1, $2, $3, $4, $5) 
 returning *;
+
+-- name: CreateEntityHistory :one
+insert into world.entity_history
+(entity_id, historic_value)
+values 
+($1, $2)
+returning *;
+
+-- name: GetEntityHistory :many
+select id, entity_id, historic_value, created_at
+from world.entity_history 
+where entity_id = $1
+order by created_at;
+
+-- name: GetEntityChildReferences :many
+select e.id as entity_id, e.entity_name as entity_name, e.wbrn as resource_name, t.wbtn as type_name
+from world.entities e inner join world.types t on e.type_id = t.id 
+where e.parent_id = $1;
+
+-- name: GetEntityReference :one
+select e.ID as entity_id, e.entity_name as entity_name, e.wbrn as resource_name, t.wbtn as type_name
+from world.entities e inner join world.types t on e.type_id = t.id 
+where e.id = $1;
+
+-- name: GetEntityReferenceByWBRN :one
+select e.ID as entity_id, e.entity_name as entity_name, e.wbrn as resource_name, t.wbtn as type_name
+from world.entities e inner join world.types t on e.type_id = t.id 
+where e.wbrn = $1;

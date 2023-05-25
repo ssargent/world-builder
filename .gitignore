@@ -78,3 +78,4 @@ target/
 # End of https://www.toptal.com/developers/gitignore/api/rust,react,visualstudiocode,go
 
 .env
+bin

@@ -8,6 +8,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 
 	"github.com/google/uuid"
 )
@@ -126,6 +127,31 @@ func (q *Queries) CreateEntityAssociation(ctx context.Context, db DBTX, arg *Cre
 	return &i, err
 }
 
+const createEntityHistory = `-- name: CreateEntityHistory :one
+insert into world.entity_history
+(entity_id, historic_value)
+values 
+($1, $2)
+returning id, entity_id, historic_value, created_at
+`
+
+type CreateEntityHistoryParams struct {
+	EntityID      uuid.UUID       `json:"entity_id"`
+	HistoricValue json.RawMessage `json:"historic_value"`
+}
+
+func (q *Queries) CreateEntityHistory(ctx context.Context, db DBTX, arg *CreateEntityHistoryParams) (*WorldEntityHistory, error) {
+	row := db.QueryRowContext(ctx, createEntityHistory, arg.EntityID, arg.HistoricValue)
+	var i WorldEntityHistory
+	err := row.Scan(
+		&i.ID,
+		&i.EntityID,
+		&i.HistoricValue,
+		&i.CreatedAt,
+	)
+	return &i, err
+}
+
 const createType = `-- name: CreateType :one
 insert into world.types
 (parent_id, wbtn, type_name, type_description)
@@ -200,6 +226,44 @@ func (q *Queries) GetAttributesForType(ctx context.Context, db DBTX, typeID uuid
 	return items, nil
 }
 
+const getEntitiesByParent = `-- name: GetEntitiesByParent :many
+select e.id, e.type_id, e.parent_id, e.wbrn, e.entity_name, e.entity_description, e.notes, e.created_at, e.updated_at from world.entities e
+where e.parent_id = $1
+`
+
+func (q *Queries) GetEntitiesByParent(ctx context.Context, db DBTX, parentID uuid.UUID) ([]*WorldEntity, error) {
+	rows, err := db.QueryContext(ctx, getEntitiesByParent, parentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*WorldEntity
+	for rows.Next() {
+		var i WorldEntity
+		if err := rows.Scan(
+			&i.ID,
+			&i.TypeID,
+			&i.ParentID,
+			&i.Wbrn,
+			&i.EntityName,
+			&i.EntityDescription,
+			&i.Notes,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getEntitiesByWBRN = `-- name: GetEntitiesByWBRN :many
 select e.id, e.type_id, e.parent_id, e.wbrn, e.entity_name, e.entity_description, e.notes, e.created_at, e.updated_at from world.entities e
 where e.wbrn like $1
@@ -236,6 +300,27 @@ func (q *Queries) GetEntitiesByWBRN(ctx context.Context, db DBTX, wbrn string) (
 		return nil, err
 	}
 	return items, nil
+}
+
+const getEntity = `-- name: GetEntity :one
+select e.id, e.type_id, e.parent_id, e.wbrn, e.entity_name, e.entity_description, e.notes, e.created_at, e.updated_at from world.entities e where id = $1
+`
+
+func (q *Queries) GetEntity(ctx context.Context, db DBTX, id uuid.UUID) (*WorldEntity, error) {
+	row := db.QueryRowContext(ctx, getEntity, id)
+	var i WorldEntity
+	err := row.Scan(
+		&i.ID,
+		&i.TypeID,
+		&i.ParentID,
+		&i.Wbrn,
+		&i.EntityName,
+		&i.EntityDescription,
+		&i.Notes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
 }
 
 const getEntityAssociationsForEntity = `-- name: GetEntityAssociationsForEntity :many
@@ -328,6 +413,132 @@ func (q *Queries) GetEntityByWBRN(ctx context.Context, db DBTX, wbrn string) (*W
 		&i.Notes,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const getEntityChildReferences = `-- name: GetEntityChildReferences :many
+select e.id as entity_id, e.entity_name as entity_name, e.wbrn as resource_name, t.wbtn as type_name
+from world.entities e inner join world.types t on e.type_id = t.id 
+where e.parent_id = $1
+`
+
+type GetEntityChildReferencesRow struct {
+	EntityID     uuid.UUID `json:"entity_id"`
+	EntityName   string    `json:"entity_name"`
+	ResourceName string    `json:"resource_name"`
+	TypeName     string    `json:"type_name"`
+}
+
+func (q *Queries) GetEntityChildReferences(ctx context.Context, db DBTX, parentID uuid.UUID) ([]*GetEntityChildReferencesRow, error) {
+	rows, err := db.QueryContext(ctx, getEntityChildReferences, parentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetEntityChildReferencesRow
+	for rows.Next() {
+		var i GetEntityChildReferencesRow
+		if err := rows.Scan(
+			&i.EntityID,
+			&i.EntityName,
+			&i.ResourceName,
+			&i.TypeName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getEntityHistory = `-- name: GetEntityHistory :many
+select id, entity_id, historic_value, created_at
+from world.entity_history 
+where entity_id = $1
+order by created_at
+`
+
+func (q *Queries) GetEntityHistory(ctx context.Context, db DBTX, entityID uuid.UUID) ([]*WorldEntityHistory, error) {
+	rows, err := db.QueryContext(ctx, getEntityHistory, entityID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*WorldEntityHistory
+	for rows.Next() {
+		var i WorldEntityHistory
+		if err := rows.Scan(
+			&i.ID,
+			&i.EntityID,
+			&i.HistoricValue,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getEntityReference = `-- name: GetEntityReference :one
+select e.ID as entity_id, e.entity_name as entity_name, e.wbrn as resource_name, t.wbtn as type_name
+from world.entities e inner join world.types t on e.type_id = t.id 
+where e.id = $1
+`
+
+type GetEntityReferenceRow struct {
+	EntityID     uuid.UUID `json:"entity_id"`
+	EntityName   string    `json:"entity_name"`
+	ResourceName string    `json:"resource_name"`
+	TypeName     string    `json:"type_name"`
+}
+
+func (q *Queries) GetEntityReference(ctx context.Context, db DBTX, id uuid.UUID) (*GetEntityReferenceRow, error) {
+	row := db.QueryRowContext(ctx, getEntityReference, id)
+	var i GetEntityReferenceRow
+	err := row.Scan(
+		&i.EntityID,
+		&i.EntityName,
+		&i.ResourceName,
+		&i.TypeName,
+	)
+	return &i, err
+}
+
+const getEntityReferenceByWBRN = `-- name: GetEntityReferenceByWBRN :one
+select e.ID as entity_id, e.entity_name as entity_name, e.wbrn as resource_name, t.wbtn as type_name
+from world.entities e inner join world.types t on e.type_id = t.id 
+where e.wbrn = $1
+`
+
+type GetEntityReferenceByWBRNRow struct {
+	EntityID     uuid.UUID `json:"entity_id"`
+	EntityName   string    `json:"entity_name"`
+	ResourceName string    `json:"resource_name"`
+	TypeName     string    `json:"type_name"`
+}
+
+func (q *Queries) GetEntityReferenceByWBRN(ctx context.Context, db DBTX, wbrn string) (*GetEntityReferenceByWBRNRow, error) {
+	row := db.QueryRowContext(ctx, getEntityReferenceByWBRN, wbrn)
+	var i GetEntityReferenceByWBRNRow
+	err := row.Scan(
+		&i.EntityID,
+		&i.EntityName,
+		&i.ResourceName,
+		&i.TypeName,
 	)
 	return &i, err
 }

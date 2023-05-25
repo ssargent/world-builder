@@ -6,6 +6,8 @@ package repository
 
 import (
 	"database/sql"
+	"encoding/json"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -48,6 +50,13 @@ type WorldEntityAttribute struct {
 	AttributeValue string       `json:"attribute_value"`
 	CreatedAt      sql.NullTime `json:"created_at"`
 	UpdatedAt      sql.NullTime `json:"updated_at"`
+}
+
+type WorldEntityHistory struct {
+	ID            uuid.UUID       `json:"id"`
+	EntityID      uuid.UUID       `json:"entity_id"`
+	HistoricValue json.RawMessage `json:"historic_value"`
+	CreatedAt     time.Time       `json:"created_at"`
 }
 
 type WorldType struct {
