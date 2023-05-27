@@ -38,7 +38,7 @@ func (e *EntityService) FindByID(ctx context.Context, id uuid.UUID) (*entities.E
 		return nil, fmt.Errorf("get: %w", err)
 	}
 
-	e.c.Set(fmt.Sprintf("entity:%s", id), *ent, cache.DefaultExpiration)
+	e.c.Set(fmt.Sprintf("entity:%s", id), ent, cache.DefaultExpiration)
 	return ent, nil
 }
 
@@ -58,7 +58,7 @@ func (e *EntityService) FindByWBRN(ctx context.Context, wbrn string) (*entities.
 		return nil, fmt.Errorf("get: %w", err)
 	}
 
-	e.c.Set(fmt.Sprintf("entity:%s", ref.EntityID), *ent, cache.DefaultExpiration)
+	e.c.Set(fmt.Sprintf("entity:%s", ref.EntityID), ent, cache.DefaultExpiration)
 	return ent, nil
 
 }

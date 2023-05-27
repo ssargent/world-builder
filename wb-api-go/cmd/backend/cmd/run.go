@@ -7,10 +7,13 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
+	_ "github.com/lib/pq" // <------------ here
+	"github.com/patrickmn/go-cache"
 	"github.com/spf13/cobra"
 	"github.com/ssargent/world-builder/wb-api-go/cmd/backend/internal"
 	"github.com/ssargent/world-builder/wb-api-go/cmd/backend/internal/config"
@@ -34,7 +37,9 @@ to quickly create a Cobra application.`,
 			log.Fatalf("server: %w", err)
 		}
 
-		go api.ListenAndServe()
+		if err := api.ListenAndServe(); err != nil {
+			log.Fatalf("ListenAndServe: %w", err)
+		}
 	},
 }
 
@@ -55,7 +60,8 @@ func server() (*internal.API, error) {
 
 	fmt.Printf("Connecting to %s\n", safeDb)
 
-	return internal.NewApi(&cfg, db, db), nil
+	cache := cache.New(time.Duration(5*time.Minute), time.Duration(10*time.Minute))
+	return internal.NewApi(&cfg, db, db, cache), nil
 }
 
 func init() {

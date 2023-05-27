@@ -4,13 +4,11 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/jmoiron/sqlx"
 	"github.com/patrickmn/go-cache"
 	"github.com/ssargent/world-builder/wb-api-go/cmd/backend/internal/config"
-	"github.com/ssargent/world-builder/wb-api-go/internal/repository"
 	"github.com/ssargent/world-builder/wb-api-go/internal/service"
 )
 
@@ -23,24 +21,20 @@ type Handler struct {
 	entity *service.EntityService
 }
 
-func NewHandler(cfg *config.Config, reader *sqlx.DB, writer *sqlx.DB) *Handler {
-	c := cache.New(time.Duration(5*time.Minute), time.Duration(10*time.Minute))
-	q := repository.Queries{}
-	entity := service.NewEntityService(c, reader, writer, &q)
+func NewHandler(cfg *config.Config, ent *service.EntityService) *Handler {
 
 	return &Handler{
-		cache:  c,
-		cfg:    cfg,
-		rdb:    reader,
-		wdb:    writer,
-		entity: entity,
+
+		cfg: cfg,
+
+		entity: ent,
 	}
 }
 
 func (h *Handler) Routes() chi.Router {
 	r := chi.NewRouter()
 
-	route(r, http.MethodGet, "entities/{id}", h.getEntity)
+	route(r, http.MethodGet, "/entities/{id}", h.getEntity)
 
 	return r
 }
