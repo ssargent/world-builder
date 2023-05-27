@@ -3,19 +3,20 @@ package internal
 import (
 	"fmt"
 	"net/http"
-
-	"github.com/patrickmn/go-cache"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
+	"strings"
 
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jmoiron/sqlx"
+	"github.com/patrickmn/go-cache"
 	"github.com/ssargent/world-builder/wb-api-go/cmd/backend/internal/config"
 	"github.com/ssargent/world-builder/wb-api-go/cmd/backend/internal/endpoints"
 	"github.com/ssargent/world-builder/wb-api-go/cmd/backend/internal/handlers"
 	"github.com/ssargent/world-builder/wb-api-go/gen/api/entity/v1/entityv1connect"
 	"github.com/ssargent/world-builder/wb-api-go/internal/repository"
 	"github.com/ssargent/world-builder/wb-api-go/internal/service"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 )
 
 /*
@@ -55,16 +56,31 @@ func NewApi(cfg *config.Config, rdb *sqlx.DB, wdb *sqlx.DB, cache *cache.Cache) 
 func (a *API) ListenAndServe() error {
 	r := chi.NewRouter()
 
+	r.Use(middleware.RequestID)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
 	mux := http.NewServeMux()
 
 	rpcServer := endpoints.NewEntityServer(a.Entity)
 	path, handler := entityv1connect.NewEntityServiceHandler(rpcServer)
 	mux.Handle(path, handler)
 
+	fmt.Printf("mux path: %s\n", path)
+
 	h := handlers.NewHandler(a.cfg, a.Entity)
 
 	r.Mount("/v1", h.Routes())
-	r.Mount("/grpc", h2c.NewHandler(mux, &http2.Server{}))
+	r.Mount(path, h2c.NewHandler(mux, &http2.Server{}))
+
+	walkFunc := func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
+		route = strings.Replace(route, "/*/", "/", -1)
+		fmt.Printf("%s %s\n", method, route)
+		return nil
+	}
+
+	if err := chi.Walk(r, walkFunc); err != nil {
+		fmt.Printf("Logging err: %s\n", err.Error())
+	}
 
 	return http.ListenAndServe(fmt.Sprintf(":%d", a.cfg.Port), r)
 }
