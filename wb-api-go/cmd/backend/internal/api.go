@@ -37,6 +37,7 @@ func (s *GreetServer) Greet(
 
 type API struct {
 	cfg    *config.Config
+	cache  *cache.Cache
 	Reader *sqlx.DB
 	Writer *sqlx.DB
 	Entity *service.EntityService
@@ -47,6 +48,7 @@ func NewApi(cfg *config.Config, rdb *sqlx.DB, wdb *sqlx.DB, cache *cache.Cache) 
 	entity := service.NewEntityService(cache, rdb, wdb, &q)
 	return &API{
 		cfg:    cfg,
+		cache:  cache,
 		Reader: rdb,
 		Writer: wdb,
 		Entity: entity,
@@ -67,7 +69,7 @@ func (a *API) ListenAndServe() error {
 
 	fmt.Printf("mux path: %s\n", path)
 
-	h := handlers.NewHandler(a.cfg, a.Entity)
+	h := handlers.NewHandler(a.cfg, a.cache, a.Entity)
 
 	r.Mount("/v1", h.Routes())
 	r.Mount(path, h2c.NewHandler(mux, &http2.Server{}))

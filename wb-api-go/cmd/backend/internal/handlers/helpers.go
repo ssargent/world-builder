@@ -15,6 +15,12 @@ type ErrResponse struct {
 	ErrorText      string `json:"error,omitempty"`  // application-level error message, for debugging
 }
 
+type ApiResponse struct {
+	Data       interface{} `json:"data,omitempty"`
+	StatusCode int         `json:"status_code,omitempty"`
+	StatusText string      `json:"status_text,omitempty"`
+}
+
 func (e *ErrResponse) Error() string {
 	return e.Err.Error()
 }
@@ -28,7 +34,11 @@ func (h *Handler) text(w http.ResponseWriter, r *http.Request, data []byte) erro
 
 func (h *Handler) success(w http.ResponseWriter, r *http.Request, v interface{}) error {
 	render.Status(r, 200)
-	render.JSON(w, r, v)
+	render.JSON(w, r, ApiResponse{
+		Data:       v,
+		StatusCode: 200,
+		StatusText: "success",
+	})
 	return nil
 }
 

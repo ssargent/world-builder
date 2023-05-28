@@ -96,33 +96,9 @@ func (e *EntityService) get(ctx context.Context, db repository.DBTX, id uuid.UUI
 		TypeName: typeInfo.Wbtn,
 	}
 
-	// todo: build getAttributes and call that here.
 	if attributes {
-		entityAttributes, err := e.queries.GetEntityAttributes(ctx, db, fullEntity.ID)
-		if err != nil {
-			return nil, fmt.Errorf("GetEntityAttributes: %w", err)
-		}
-
-		fmt.Printf("getTypeAttributes entity.TypeID=%s\n", entity.TypeID.String())
-		attribs, err := e.getTypeAttributes(ctx, db, entity.TypeID)
-		if err != nil {
-			return nil, fmt.Errorf("getTypeAttributes: %w", err)
-		}
-
-		fmt.Printf("entityAttributes %+v\n", entityAttributes)
-		fullEntity.Attributes = make([]*entities.EntityAttribute, len(entityAttributes))
-
-		for i, entAtt := range entityAttributes {
-			attributeDef, ok := attribs[entAtt.AttributeID]
-			if !ok {
-				return nil, fmt.Errorf("attribute definition not found: %s", entAtt.AttributeID)
-			}
-
-			fullEntity.Attributes[i] = &entities.EntityAttribute{
-				Name:  attributeDef.AttributeName,
-				Type:  attributeDef.DataType,
-				Value: entAtt.AttributeValue,
-			}
+		if err := e.populateAttributes(ctx, db, fullEntity); err != nil {
+			return nil, fmt.Errorf("populateAttributes: %w", err)
 		}
 	}
 
@@ -145,6 +121,35 @@ func (e *EntityService) get(ctx context.Context, db repository.DBTX, id uuid.UUI
 	}
 
 	return fullEntity, nil
+}
+
+func (e *EntityService) populateAttributes(ctx context.Context, db repository.DBTX, fullEntity *entities.Entity) error {
+	entityAttributes, err := e.queries.GetEntityAttributes(ctx, db, fullEntity.ID)
+	if err != nil {
+		return fmt.Errorf("GetEntityAttributes: %w", err)
+	}
+
+	attribs, err := e.getTypeAttributes(ctx, db, fullEntity.Type.TypeID)
+	if err != nil {
+		return fmt.Errorf("getTypeAttributes: %w", err)
+	}
+
+	fmt.Printf("entityAttributes %+v\n", entityAttributes)
+	fullEntity.Attributes = make([]*entities.EntityAttribute, len(entityAttributes))
+
+	for i, entAtt := range entityAttributes {
+		attributeDef, ok := attribs[entAtt.AttributeID]
+		if !ok {
+			return fmt.Errorf("attribute definition not found: %s", entAtt.AttributeID)
+		}
+
+		fullEntity.Attributes[i] = &entities.EntityAttribute{
+			Name:  attributeDef.AttributeName,
+			Type:  attributeDef.DataType,
+			Value: entAtt.AttributeValue,
+		}
+	}
+	return nil
 }
 
 func (e *EntityService) getType(ctx context.Context, db repository.DBTX, id uuid.UUID, attributeDefinitions bool) (*entities.EntityType, error) {

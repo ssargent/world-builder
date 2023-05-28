@@ -21,21 +21,18 @@ type Handler struct {
 	entity *service.EntityService
 }
 
-func NewHandler(cfg *config.Config, ent *service.EntityService) *Handler {
-
+func NewHandler(cfg *config.Config, cache *cache.Cache, ent *service.EntityService) *Handler {
 	return &Handler{
-
-		cfg: cfg,
-
+		cfg:    cfg,
+		cache:  cache,
 		entity: ent,
 	}
 }
 
 func (h *Handler) Routes() chi.Router {
 	r := chi.NewRouter()
-
 	route(r, http.MethodGet, "/entities/{id}", h.getEntity)
-
+	route(r, http.MethodGet, "/system/cache", h.systemCache)
 	return r
 }
 
