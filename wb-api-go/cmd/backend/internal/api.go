@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	grpcreflect "github.com/bufbuild/connect-grpcreflect-go"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jmoiron/sqlx"
@@ -66,6 +67,14 @@ func (a *API) ListenAndServe() error {
 	rpcServer := endpoints.NewEntityServer(a.Entity)
 	path, handler := entityv1connect.NewEntityServiceHandler(rpcServer)
 	mux.Handle(path, handler)
+	reflector := grpcreflect.NewStaticReflector(
+		"api.entity.v1.EntityService",
+		// protoc-gen-connect-go generates package-level constants
+		// for these fully-qualified protobuf service names, so you'd more likely
+		// reference userv1.UserServiceName and groupv1.GroupServiceName.
+	)
+	r1path, r1handler := grpcreflect.NewHandlerV1(reflector)
+	r2path, r2handler := grpcreflect.NewHandlerV1Alpha(reflector)
 
 	fmt.Printf("mux path: %s\n", path)
 
@@ -73,6 +82,9 @@ func (a *API) ListenAndServe() error {
 
 	r.Mount("/v1", h.Routes())
 	r.Mount(path, h2c.NewHandler(mux, &http2.Server{}))
+
+	r.Handle(r1path, r1handler)
+	r.Handle(r2path, r2handler)
 
 	walkFunc := func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
 		route = strings.Replace(route, "/*/", "/", -1)

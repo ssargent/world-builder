@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"strings"
-	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
@@ -53,6 +52,8 @@ func server() (*internal.API, error) {
 		return nil, fmt.Errorf("envconfig.Process: %w", err)
 	}
 
+	explainConfig(&cfg)
+
 	db, safeDb, err := database(&cfg)
 	if err != nil {
 		return nil, fmt.Errorf("database: %w", err)
@@ -60,7 +61,7 @@ func server() (*internal.API, error) {
 
 	fmt.Printf("Connecting to %s\n", safeDb)
 
-	cache := cache.New(time.Duration(5*time.Minute), time.Duration(10*time.Minute))
+	cache := cache.New(cfg.Cache.DefaultExpiration, cfg.Cache.DefaultCleanup)
 	return internal.NewApi(&cfg, db, db, cache), nil
 }
 
@@ -86,4 +87,20 @@ func database(cfg *config.Config) (*sqlx.DB, string, error) {
 	db, err := sqlx.Connect(cfg.Database.Driver, dbURI)
 
 	return db, dbUriSafe, err
+}
+
+func explainConfig(cfg *config.Config) {
+	fmt.Println("-----------------")
+	fmt.Println("World Builder Configured Parameters")
+	fmt.Println("-----------------")
+
+	fmt.Printf("Config.Port := %d\n", cfg.Port)
+	fmt.Printf("Config.Database.Driver := %s\n", cfg.Database.Driver)
+	fmt.Printf("Config.Database.Name := %s\n", cfg.Database.Name)
+	fmt.Printf("Config.Database.Username := %s\n", cfg.Database.Username)
+	fmt.Printf("Config.Database.Server := %s\n", cfg.Database.Server)
+	fmt.Printf("Config.Cache.DefaultExpiration := %s\n", cfg.Cache.DefaultExpiration)
+	fmt.Printf("Config.Cache.DefaultCleanup := %s\n", cfg.Cache.DefaultCleanup)
+	fmt.Println("-----------------")
+
 }
