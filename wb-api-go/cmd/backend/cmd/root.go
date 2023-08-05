@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// rootCmd represents the base command when called without any subcommands
+// rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:   "backend",
 	Short: "A brief description of your application",
@@ -33,6 +33,7 @@ func Execute() {
 	}
 }
 
+//nolint:gochecknoinits // cobra commander has ordered the use of inits.
 func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,

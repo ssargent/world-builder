@@ -226,6 +226,53 @@ func (q *Queries) GetAttributesForType(ctx context.Context, db DBTX, typeID uuid
 	return items, nil
 }
 
+const getEntitiesByCriteria = `-- name: GetEntitiesByCriteria :many
+select e.id, e.type_id, e.parent_id, e.wbrn, e.entity_name, e.entity_description, e.notes, e.created_at, e.updated_at
+from world.entities e
+	inner join world.types w on e.type_id = w.id
+	inner join world.entities p on e.parent_id = p.id
+where (w.wbtn = $1 or $1 = '')
+and (p.wbrn = $2 or $2 = '')
+`
+
+type GetEntitiesByCriteriaParams struct {
+	Wbtn string `json:"wbtn"`
+	Wbrn string `json:"wbrn"`
+}
+
+func (q *Queries) GetEntitiesByCriteria(ctx context.Context, db DBTX, arg *GetEntitiesByCriteriaParams) ([]*WorldEntity, error) {
+	rows, err := db.QueryContext(ctx, getEntitiesByCriteria, arg.Wbtn, arg.Wbrn)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*WorldEntity
+	for rows.Next() {
+		var i WorldEntity
+		if err := rows.Scan(
+			&i.ID,
+			&i.TypeID,
+			&i.ParentID,
+			&i.Wbrn,
+			&i.EntityName,
+			&i.EntityDescription,
+			&i.Notes,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getEntitiesByParent = `-- name: GetEntitiesByParent :many
 select e.id, e.type_id, e.parent_id, e.wbrn, e.entity_name, e.entity_description, e.notes, e.created_at, e.updated_at from world.entities e
 where e.parent_id = $1

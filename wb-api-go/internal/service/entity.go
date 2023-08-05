@@ -27,10 +27,46 @@ func NewEntityService(c *cache.Cache, rdb, wdb *sqlx.DB, queries EntityDataProvi
 	}
 }
 
-func (e *EntityService) FindByID(ctx context.Context, id uuid.UUID) (*entities.Entity, error) {
-	cached, found := e.c.Get(fmt.Sprintf("entity:%s", id))
+func (e *EntityService) FilterByCriteria(ctx context.Context, wbtn, parentWBRN string) ([]*entities.Entity, error) {
+	cached, found := e.c.Get(fmt.Sprintf("entities-filtered/%s/%s", wbtn, parentWBRN))
 	if found {
-		return cached.(*entities.Entity), nil
+		data, ok := cached.([]*entities.Entity)
+		if ok {
+			return data, nil
+		}
+	}
+
+	filter := repository.GetEntitiesByCriteriaParams{
+		Wbrn: parentWBRN,
+		Wbtn: wbtn,
+	}
+
+	dbents, err := e.queries.GetEntitiesByCriteria(ctx, e.rdb, &filter)
+	if err != nil {
+		return nil, fmt.Errorf("GetEntitiesByCriteria: %w", err)
+	}
+
+	ents := make([]*entities.Entity, len(dbents))
+	for i, dbentity := range dbents {
+		tmpe, err := e.get(ctx, e.rdb, dbentity.ID, false, true, false)
+		if err != nil {
+			return nil, fmt.Errorf("get(entity): %w", err)
+		}
+
+		ents[i] = tmpe
+	}
+
+	e.c.Set(fmt.Sprintf("entities-filtered/%s/%s", wbtn, parentWBRN), ents, cache.DefaultExpiration)
+	return ents, nil
+}
+
+func (e *EntityService) FindByID(ctx context.Context, id uuid.UUID) (*entities.Entity, error) {
+	cached, found := e.c.Get(fmt.Sprintf("entity/%s", id))
+	if found {
+		data, ok := cached.(*entities.Entity)
+		if ok {
+			return data, nil
+		}
 	}
 
 	ent, err := e.get(ctx, e.rdb, id, true, true, true)
@@ -50,7 +86,10 @@ func (e *EntityService) FindByWBRN(ctx context.Context, wbrn string) (*entities.
 
 	cached, found := e.c.Get(fmt.Sprintf("entity:%s", ref.EntityID))
 	if found {
-		return cached.(*entities.Entity), nil
+		data, ok := cached.(*entities.Entity)
+		if ok {
+			return data, nil
+		}
 	}
 
 	ent, err := e.get(ctx, e.rdb, ref.EntityID, true, true, true)
@@ -58,21 +97,22 @@ func (e *EntityService) FindByWBRN(ctx context.Context, wbrn string) (*entities.
 		return nil, fmt.Errorf("get: %w", err)
 	}
 
-	e.c.Set(fmt.Sprintf("entity:%s", ref.EntityID), ent, cache.DefaultExpiration)
+	e.c.Set(fmt.Sprintf("entity/%s", ref.EntityID), ent, cache.DefaultExpiration)
 	return ent, nil
-
 }
 
-func (e *EntityService) get(ctx context.Context, db repository.DBTX, id uuid.UUID, associations, attributes, children bool) (*entities.Entity, error) {
+func (e *EntityService) get(
+	ctx context.Context,
+	db repository.DBTX,
+	id uuid.UUID,
+	//nolint:revive,unparam // will fix this soon.
+	associations, attributes, children bool) (*entities.Entity, error) {
 	entity, err := e.queries.GetEntity(ctx, db, id)
 	if err != nil {
 		return nil, fmt.Errorf("GetEntity: %w", err)
 	}
 
-	fullEntity, err := mapEntity(entity)
-	if err != nil {
-		return nil, fmt.Errorf("mapEntity: %w", err)
-	}
+	fullEntity := mapEntity(entity)
 
 	parentEntity, err := e.queries.GetEntityReference(ctx, db, entity.ParentID)
 	if err != nil {
@@ -152,7 +192,11 @@ func (e *EntityService) populateAttributes(ctx context.Context, db repository.DB
 	return nil
 }
 
-func (e *EntityService) getType(ctx context.Context, db repository.DBTX, id uuid.UUID, attributeDefinitions bool) (*entities.EntityType, error) {
+func (e *EntityService) getType(
+	ctx context.Context,
+	db repository.DBTX,
+	id uuid.UUID,
+	attributeDefinitions bool) (*entities.EntityType, error) {
 	wt, err := e.queries.GetTypeByID(ctx, db, id)
 	if err != nil {
 		return nil, fmt.Errorf("GetTypeByID: %w", err)
@@ -201,7 +245,7 @@ func (e *EntityService) getType(ctx context.Context, db repository.DBTX, id uuid
 	return &entityType, nil
 }
 
-func mapEntity(ent *repository.WorldEntity) (*entities.Entity, error) {
+func mapEntity(ent *repository.WorldEntity) *entities.Entity {
 	fullEntity := entities.Entity{
 		ID:           ent.ID,
 		ResourceName: ent.Wbrn,
@@ -212,10 +256,13 @@ func mapEntity(ent *repository.WorldEntity) (*entities.Entity, error) {
 		UpdatedAt:    ent.UpdatedAt.Time,
 	}
 
-	return &fullEntity, nil
+	return &fullEntity
 }
 
-func (e *EntityService) getTypeAttributes(ctx context.Context, db repository.DBTX, typeID uuid.UUID) (map[uuid.UUID]entities.Attribute, error) {
+func (e *EntityService) getTypeAttributes(
+	ctx context.Context,
+	db repository.DBTX,
+	typeID uuid.UUID) (map[uuid.UUID]entities.Attribute, error) {
 	defs, err := e.queries.GetAttributesForType(ctx, db, typeID)
 	if err != nil {
 		return nil, fmt.Errorf("GetAttributesForType: %w", err)
@@ -237,6 +284,6 @@ func (e *EntityService) getTypeAttributes(ctx context.Context, db repository.DBT
 	return attribs, nil
 }
 
-func (e *EntityService) UpdateByID(id uuid.UUID) (*entities.Entity, error) {
+/*func (e *EntityService) UpdateByID(_ uuid.UUID) (*entities.Entity, error) {
 	return nil, nil
-}
+}*/

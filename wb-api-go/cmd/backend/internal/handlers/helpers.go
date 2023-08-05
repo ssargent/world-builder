@@ -1,12 +1,13 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/render"
 )
 
-type ErrResponse struct {
+type ResponseError struct {
 	Err            error  `json:"-"` // low-level runtime error
 	HTTPStatusCode int    `json:"http_status_code,omitempty"`
 	StackTrace     string `json:"stack_trace,omitempty"`
@@ -15,26 +16,28 @@ type ErrResponse struct {
 	ErrorText      string `json:"error,omitempty"`  // application-level error message, for debugging
 }
 
-type ApiResponse struct {
+type APIResponse struct {
 	Data       interface{} `json:"data,omitempty"`
 	StatusCode int         `json:"status_code,omitempty"`
 	StatusText string      `json:"status_text,omitempty"`
 }
 
-func (e *ErrResponse) Error() string {
+func (e *ResponseError) Error() string {
 	return e.Err.Error()
 }
 
 func (h *Handler) text(w http.ResponseWriter, r *http.Request, data []byte) error {
 	w.Header().Set("Content-Type", "text/plain")
 	render.Status(r, 200)
-	w.Write(data)
+	if _, err := w.Write(data); err != nil {
+		return fmt.Errorf("w.Write: %w", err)
+	}
 	return nil
 }
 
 func (h *Handler) success(w http.ResponseWriter, r *http.Request, v interface{}) error {
 	render.Status(r, 200)
-	render.JSON(w, r, ApiResponse{
+	render.JSON(w, r, APIResponse{
 		Data:       v,
 		StatusCode: 200,
 		StatusText: "success",
@@ -42,6 +45,7 @@ func (h *Handler) success(w http.ResponseWriter, r *http.Request, v interface{})
 	return nil
 }
 
+//nolint:unparam // ok to return error here.
 func (h *Handler) status(w http.ResponseWriter, r *http.Request, status int, v interface{}) error {
 	render.Status(r, status)
 	render.JSON(w, r, v)
@@ -49,19 +53,21 @@ func (h *Handler) status(w http.ResponseWriter, r *http.Request, status int, v i
 }
 
 func (h *Handler) error(w http.ResponseWriter, r *http.Request, status int, err error) error {
-	response := ErrResponse{
+	response := ResponseError{
 		Err:            err,
 		HTTPStatusCode: status,
 		StatusText:     http.StatusText(status),
 		ErrorText:      err.Error(),
 	}
 
-	response.Render(w, r)
+	if err := response.Render(w, r); err != nil {
+		return fmt.Errorf("response.Render: %w", err)
+	}
 	return &response
 }
 
-// Render  renders rendery things to render wtse-1
-func (e *ErrResponse) Render(w http.ResponseWriter, r *http.Request) error {
+// Render  renders rendery things to render wtse-1.
+func (e *ResponseError) Render(w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Content-Type", "application/json")
 	render.Status(r, e.HTTPStatusCode)
 	render.JSON(w, r, e)

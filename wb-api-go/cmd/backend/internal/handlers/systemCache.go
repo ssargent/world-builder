@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func (h *Handler) systemCache(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (h *Handler) systemCache(_ context.Context, w http.ResponseWriter, r *http.Request) error {
 	cached := h.cache.Items()
 	cacheList := make([]string, len(cached))
 
@@ -13,7 +13,7 @@ func (h *Handler) systemCache(ctx context.Context, w http.ResponseWriter, r *htt
 
 	for k := range cached {
 		cacheList[idx] = k
-		idx += 1
+		idx++
 	}
 
 	return h.success(w, r, cacheList)

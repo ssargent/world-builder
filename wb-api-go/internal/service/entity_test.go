@@ -4,13 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/ssargent/world-builder/wb-api-go/internal/repository"
 	mock_service "github.com/ssargent/world-builder/wb-api-go/internal/service/mocks"
 	"github.com/ssargent/world-builder/wb-api-go/internal/tools"
 	"github.com/ssargent/world-builder/wb-api-go/pkg/entities"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 )
 
 func TestEntityService_get(t *testing.T) {
@@ -20,7 +20,7 @@ func TestEntityService_get(t *testing.T) {
 		queries *mock_service.MockEntityDataProvider
 	}
 	type args struct {
-		ctx          context.Context
+		ctx          context.Context //nolint:containedctx // ok here.
 		db           repository.DBTX
 		id           uuid.UUID
 		associations bool
@@ -41,17 +41,31 @@ func TestEntityService_get(t *testing.T) {
 				children:     true,
 			},
 			mock: func(f *fields) {
-				//	f.c.EXPECT().Get(fmt.Sprintf("entity:%s", tools.UUID(1))).Times(1).Return(nil, false)
-				//	f.c.EXPECT().Set(fmt.Sprintf("entity:%s", tools.UUID(1)), gomock.Any(), gomock.Any()).Times(1)
-				//f.queries.EXPECT().
 				f.queries.EXPECT().GetEntity(gomock.Any(), gomock.Any(), tools.UUID(1)).Times(1).Return(tools.Entity(1, 2, 3), nil)
-				f.queries.EXPECT().GetEntityReference(gomock.Any(), gomock.Any(), tools.UUID(2)).Times(1).Return(tools.EntityReference(2, 3), nil)
-				f.queries.EXPECT().GetTypeByID(gomock.Any(), gomock.Any(), tools.UUID(3)).Times(1).Return(tools.EntityType(3, 4), nil)
-				f.queries.EXPECT().GetTypeByID(gomock.Any(), gomock.Any(), tools.UUID(4)).Times(1).Return(tools.EntityType(3, 4), nil)
-				f.queries.EXPECT().GetEntityAttributes(gomock.Any(), gomock.Any(), tools.UUID(1)).Times(1).Return(tools.EntityAttributes(1), nil)
-				f.queries.EXPECT().GetAttributesForType(gomock.Any(), gomock.Any(), tools.UUID(3)).Times(1).Return(tools.AttributesForType(3), nil)
-				f.queries.EXPECT().GetEntityChildReferences(gomock.Any(), gomock.Any(), tools.UUID(1)).Times(1).Return(nil, nil)
-
+				f.queries.EXPECT().
+					GetEntityReference(gomock.Any(), gomock.Any(), tools.UUID(2)).
+					Times(1).
+					Return(tools.EntityReference(2, 3), nil)
+				f.queries.EXPECT().
+					GetTypeByID(gomock.Any(), gomock.Any(), tools.UUID(3)).
+					Times(1).
+					Return(tools.EntityType(3, 4), nil)
+				f.queries.EXPECT().
+					GetTypeByID(gomock.Any(), gomock.Any(), tools.UUID(4)).
+					Times(1).
+					Return(tools.EntityType(3, 4), nil)
+				f.queries.EXPECT().
+					GetEntityAttributes(gomock.Any(), gomock.Any(), tools.UUID(1)).
+					Times(1).
+					Return(tools.EntityAttributes(1), nil)
+				f.queries.EXPECT().
+					GetAttributesForType(gomock.Any(), gomock.Any(), tools.UUID(3)).
+					Times(1).
+					Return(tools.AttributesForType(3), nil)
+				f.queries.EXPECT().
+					GetEntityChildReferences(gomock.Any(), gomock.Any(), tools.UUID(1)).
+					Times(1).
+					Return(nil, nil)
 			},
 			want: func(got *entities.Entity, err error) {
 				require.NoError(t, err)

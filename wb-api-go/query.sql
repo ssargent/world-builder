@@ -48,6 +48,14 @@ where e.wbrn like $1;
 select e.* from world.entities e
 where e.parent_id = $1;
 
+-- name: GetEntitiesByCriteria :many
+select e.*
+from world.entities e
+	inner join world.types w on e.type_id = w.id
+	inner join world.entities p on e.parent_id = p.id
+where (w.wbtn = $1 or $1 = '')
+and (p.wbrn = $2 or $2 = '');
+
 -- name: CreateEntity :one
 insert into world.entities
 (id, type_id, parent_id, wbrn, entity_name, entity_description, notes)
@@ -94,3 +102,4 @@ where e.id = $1;
 select e.ID as entity_id, e.entity_name as entity_name, e.wbrn as resource_name, t.wbtn as type_name
 from world.entities e inner join world.types t on e.type_id = t.id 
 where e.wbrn = $1;
+

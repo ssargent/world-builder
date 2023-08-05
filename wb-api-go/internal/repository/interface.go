@@ -7,7 +7,10 @@ import (
 )
 
 type AttributeDefinitionQuerier interface {
-	CreateAttributeDefinition(ctx context.Context, db DBTX, arg *CreateAttributeDefinitionParams) (*WorldAttributeDefinition, error)
+	CreateAttributeDefinition(
+		ctx context.Context,
+		db DBTX,
+		arg *CreateAttributeDefinitionParams) (*WorldAttributeDefinition, error)
 	GetAttributesForType(ctx context.Context, db DBTX, typeID uuid.UUID) ([]*WorldAttributeDefinition, error)
 }
 
@@ -17,10 +20,14 @@ type EntityQuerier interface {
 	GetEntitiesByWBRN(ctx context.Context, db DBTX, wbrn string) ([]*WorldEntity, error)
 	GetEntity(ctx context.Context, db DBTX, id uuid.UUID) (*WorldEntity, error)
 	GetEntityByWBRN(ctx context.Context, db DBTX, wbrn string) (*WorldEntity, error)
+	GetEntitiesByCriteria(ctx context.Context, db DBTX, arg *GetEntitiesByCriteriaParams) ([]*WorldEntity, error)
 }
 
 type EntityAssociationQuerier interface {
-	CreateEntityAssociation(ctx context.Context, db DBTX, arg *CreateEntityAssociationParams) (*WorldEntityAssociation, error)
+	CreateEntityAssociation(
+		ctx context.Context,
+		db DBTX,
+		arg *CreateEntityAssociationParams) (*WorldEntityAssociation, error)
 	GetEntityAssociationsForEntity(ctx context.Context, db DBTX, entityOne uuid.UUID) ([]*WorldEntityAssociation, error)
 }
 

@@ -10,10 +10,10 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jmoiron/sqlx"
 	"github.com/patrickmn/go-cache"
+	"github.com/ssargent/apis/pkg/worldbuilder/entity/v1/entityv1connect"
 	"github.com/ssargent/world-builder/wb-api-go/cmd/backend/internal/config"
 	"github.com/ssargent/world-builder/wb-api-go/cmd/backend/internal/endpoints"
 	"github.com/ssargent/world-builder/wb-api-go/cmd/backend/internal/handlers"
-	"github.com/ssargent/world-builder/wb-api-go/gen/api/entity/v1/entityv1connect"
 	"github.com/ssargent/world-builder/wb-api-go/internal/repository"
 	"github.com/ssargent/world-builder/wb-api-go/internal/service"
 	"golang.org/x/net/http2"
@@ -44,7 +44,7 @@ type API struct {
 	Entity *service.EntityService
 }
 
-func NewApi(cfg *config.Config, rdb *sqlx.DB, wdb *sqlx.DB, cache *cache.Cache) *API {
+func NewAPI(cfg *config.Config, rdb *sqlx.DB, wdb *sqlx.DB, cache *cache.Cache) *API {
 	q := repository.Queries{}
 	entity := service.NewEntityService(cache, rdb, wdb, &q)
 	return &API{
@@ -68,15 +68,13 @@ func (a *API) ListenAndServe() error {
 	path, handler := entityv1connect.NewEntityServiceHandler(rpcServer)
 	mux.Handle(path, handler)
 	reflector := grpcreflect.NewStaticReflector(
-		"api.entity.v1.EntityService",
+		strings.ReplaceAll(path, "/", ""),
 		// protoc-gen-connect-go generates package-level constants
 		// for these fully-qualified protobuf service names, so you'd more likely
 		// reference userv1.UserServiceName and groupv1.GroupServiceName.
 	)
 	r1path, r1handler := grpcreflect.NewHandlerV1(reflector)
 	r2path, r2handler := grpcreflect.NewHandlerV1Alpha(reflector)
-
-	fmt.Printf("mux path: %s\n", path)
 
 	h := handlers.NewHandler(a.cfg, a.cache, a.Entity)
 
@@ -85,9 +83,13 @@ func (a *API) ListenAndServe() error {
 
 	r.Handle(r1path, r1handler)
 	r.Handle(r2path, r2handler)
+	r.Handle("/grpc.reflection.v1alpha.ServerReflection/ServerReflectionInfo", r2handler)
 
-	walkFunc := func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
-		route = strings.Replace(route, "/*/", "/", -1)
+	walkFunc := func(method string,
+		route string,
+		handler http.Handler,
+		middlewares ...func(http.Handler) http.Handler) error {
+		route = strings.ReplaceAll(route, "/*/", "/")
 		fmt.Printf("%s %s\n", method, route)
 		return nil
 	}
@@ -96,5 +98,11 @@ func (a *API) ListenAndServe() error {
 		fmt.Printf("Logging err: %s\n", err.Error())
 	}
 
-	return http.ListenAndServe(fmt.Sprintf(":%d", a.cfg.Port), r)
+	h2s := &http2.Server{}
+	srv := &http.Server{
+		Addr:    fmt.Sprintf("0.0.0.0:%d", a.cfg.Port),
+		Handler: h2c.NewHandler(r, h2s),
+	}
+
+	return srv.ListenAndServe()
 }

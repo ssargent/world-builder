@@ -74,9 +74,9 @@ func AttributesForType(id int8) []*repository.WorldAttributeDefinition {
 }
 
 func EntityAttributes(id int8) []*repository.WorldEntityAttribute {
-	weas := make([]*repository.WorldEntityAttribute, 0)
+	entityAttributes := make([]*repository.WorldEntityAttribute, 0)
 
-	weas = append(weas, &repository.WorldEntityAttribute{
+	entityAttributes = append(entityAttributes, &repository.WorldEntityAttribute{
 		ID:             uuid.New(),
 		EntityID:       UUID(id),
 		AttributeID:    UUID(10),
@@ -84,7 +84,7 @@ func EntityAttributes(id int8) []*repository.WorldEntityAttribute {
 		CreatedAt:      sql.NullTime{Time: time.Now()},
 		UpdatedAt:      sql.NullTime{Time: time.Now()},
 	})
-	weas = append(weas, &repository.WorldEntityAttribute{
+	entityAttributes = append(entityAttributes, &repository.WorldEntityAttribute{
 		ID:             uuid.New(),
 		EntityID:       UUID(id),
 		AttributeID:    UUID(11),
@@ -93,5 +93,5 @@ func EntityAttributes(id int8) []*repository.WorldEntityAttribute {
 		UpdatedAt:      sql.NullTime{Time: time.Now()},
 	})
 
-	return weas
+	return entityAttributes
 }
