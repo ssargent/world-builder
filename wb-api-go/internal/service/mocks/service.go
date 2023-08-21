@@ -112,6 +112,36 @@ func (mr *MockEntityDataProviderMockRecorder) CreateType(ctx, db, arg interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateType", reflect.TypeOf((*MockEntityDataProvider)(nil).CreateType), ctx, db, arg)
 }
 
+// CreateTypeAttribute mocks base method.
+func (m *MockEntityDataProvider) CreateTypeAttribute(ctx context.Context, db repository.DBTX, arg *repository.CreateTypeAttributeParams) (*repository.WorldTypeAttribute, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateTypeAttribute", ctx, db, arg)
+	ret0, _ := ret[0].(*repository.WorldTypeAttribute)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateTypeAttribute indicates an expected call of CreateTypeAttribute.
+func (mr *MockEntityDataProviderMockRecorder) CreateTypeAttribute(ctx, db, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTypeAttribute", reflect.TypeOf((*MockEntityDataProvider)(nil).CreateTypeAttribute), ctx, db, arg)
+}
+
+// GetAttributeByWBATN mocks base method.
+func (m *MockEntityDataProvider) GetAttributeByWBATN(ctx context.Context, db repository.DBTX, wbatn string) (*repository.WorldAttributeDefinition, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAttributeByWBATN", ctx, db, wbatn)
+	ret0, _ := ret[0].(*repository.WorldAttributeDefinition)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAttributeByWBATN indicates an expected call of GetAttributeByWBATN.
+func (mr *MockEntityDataProviderMockRecorder) GetAttributeByWBATN(ctx, db, wbatn interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAttributeByWBATN", reflect.TypeOf((*MockEntityDataProvider)(nil).GetAttributeByWBATN), ctx, db, wbatn)
+}
+
 // GetAttributesForType mocks base method.
 func (m *MockEntityDataProvider) GetAttributesForType(ctx context.Context, db repository.DBTX, typeID uuid.UUID) ([]*repository.WorldAttributeDefinition, error) {
 	m.ctrl.T.Helper()

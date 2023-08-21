@@ -7,22 +7,32 @@ select * from world.types
 where wbtn = $1;
 
 -- name: GetEntityAttributes :many
-select * from 
-world.entity_attributes 
+select * from
+world.entity_attributes
 where entity_id = $1;
 
 -- name: GetAttributesForType :many
 select ad.* from
 world.attribute_definitions ad inner join world.type_attributes ta
-on ad.id = ta.attribute_id 
+on ad.id = ta.attribute_id
 inner join world.types t on t.id = ta.type_id
 where ta.type_id = $1;
+
+-- name: GetAttributeByWBATN :one
+select * from world.attribute_definitions
+where wbatn = $1;
 
 -- name: CreateType :one
 insert into world.types
 (parent_id, wbtn, type_name, type_description)
-values 
+values
 ($1, $2, $3, $4)
+returning *;
+
+-- name: CreateTypeAttribute :one
+insert into world.type_attributes
+(type_id, attribute_id, ordinal, is_required)
+values ($1, $2, $3, $4)
 returning *;
 
 -- name: CreateAttributeDefinition :one
@@ -59,7 +69,7 @@ and (p.wbrn = $2 or $2 = '');
 -- name: CreateEntity :one
 insert into world.entities
 (id, type_id, parent_id, wbrn, entity_name, entity_description, notes)
-values 
+values
 ($1, $2, $3, $4, $5, $6, $7)
 returning *;
 
@@ -71,35 +81,35 @@ where (entity_one = $1 or entity_two = $1);
 -- name: CreateEntityAssociation :one
 insert into world.entity_associations
 (entity_one, entity_two, type_id, effective_start_date, effective_end_date)
-values 
-($1, $2, $3, $4, $5) 
+values
+($1, $2, $3, $4, $5)
 returning *;
 
 -- name: CreateEntityHistory :one
 insert into world.entity_history
 (entity_id, historic_value)
-values 
+values
 ($1, $2)
 returning *;
 
 -- name: GetEntityHistory :many
 select id, entity_id, historic_value, created_at
-from world.entity_history 
+from world.entity_history
 where entity_id = $1
 order by created_at;
 
 -- name: GetEntityChildReferences :many
 select e.id as entity_id, e.entity_name as entity_name, e.wbrn as resource_name, t.wbtn as type_name
-from world.entities e inner join world.types t on e.type_id = t.id 
+from world.entities e inner join world.types t on e.type_id = t.id
 where e.parent_id = $1;
 
 -- name: GetEntityReference :one
 select e.ID as entity_id, e.entity_name as entity_name, e.wbrn as resource_name, t.wbtn as type_name
-from world.entities e inner join world.types t on e.type_id = t.id 
+from world.entities e inner join world.types t on e.type_id = t.id
 where e.id = $1;
 
 -- name: GetEntityReferenceByWBRN :one
 select e.ID as entity_id, e.entity_name as entity_name, e.wbrn as resource_name, t.wbtn as type_name
-from world.entities e inner join world.types t on e.type_id = t.id 
+from world.entities e inner join world.types t on e.type_id = t.id
 where e.wbrn = $1;
 

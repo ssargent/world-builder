@@ -42,17 +42,21 @@ type API struct {
 	Reader *sqlx.DB
 	Writer *sqlx.DB
 	Entity *service.EntityService
+	Types  *service.TypeService
 }
 
 func NewAPI(cfg *config.Config, rdb *sqlx.DB, wdb *sqlx.DB, cache *cache.Cache) *API {
 	q := repository.Queries{}
 	entity := service.NewEntityService(cache, rdb, wdb, &q)
+	types := service.NewTypeService(cache, rdb, wdb, &q)
+
 	return &API{
 		cfg:    cfg,
 		cache:  cache,
 		Reader: rdb,
 		Writer: wdb,
 		Entity: entity,
+		Types:  types,
 	}
 }
 
@@ -64,7 +68,7 @@ func (a *API) ListenAndServe() error {
 	r.Use(middleware.Recoverer)
 	mux := http.NewServeMux()
 
-	rpcServer := endpoints.NewEntityServer(a.Entity)
+	rpcServer := endpoints.NewEntityServer(a.Entity, a.Types)
 	path, handler := entityv1connect.NewEntityServiceHandler(rpcServer)
 	mux.Handle(path, handler)
 	reflector := grpcreflect.NewStaticReflector(

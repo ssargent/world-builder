@@ -38,12 +38,14 @@ type EntityHistoryQuerier interface {
 
 type TypeQuerier interface {
 	CreateType(ctx context.Context, db DBTX, arg *CreateTypeParams) (*WorldType, error)
+	CreateTypeAttribute(ctx context.Context, db DBTX, arg *CreateTypeAttributeParams) (*WorldTypeAttribute, error)
 	GetTypeByID(ctx context.Context, db DBTX, id uuid.UUID) (*WorldType, error)
 	GetTypeByWBTN(ctx context.Context, db DBTX, wbtn string) (*WorldType, error)
 }
 
 type EntityAttributeQuerier interface {
 	GetEntityAttributes(ctx context.Context, db DBTX, entityID uuid.UUID) ([]*WorldEntityAttribute, error)
+	GetAttributeByWBATN(ctx context.Context, db DBTX, wbatn string) (*WorldAttributeDefinition, error)
 }
 
 type ReferenceQuerier interface {

@@ -16,6 +16,8 @@ type Querier interface {
 	CreateEntityAssociation(ctx context.Context, db DBTX, arg *CreateEntityAssociationParams) (*WorldEntityAssociation, error)
 	CreateEntityHistory(ctx context.Context, db DBTX, arg *CreateEntityHistoryParams) (*WorldEntityHistory, error)
 	CreateType(ctx context.Context, db DBTX, arg *CreateTypeParams) (*WorldType, error)
+	CreateTypeAttribute(ctx context.Context, db DBTX, arg *CreateTypeAttributeParams) (*WorldTypeAttribute, error)
+	GetAttributeByWBATN(ctx context.Context, db DBTX, wbatn string) (*WorldAttributeDefinition, error)
 	GetAttributesForType(ctx context.Context, db DBTX, typeID uuid.UUID) ([]*WorldAttributeDefinition, error)
 	GetEntitiesByCriteria(ctx context.Context, db DBTX, arg *GetEntitiesByCriteriaParams) ([]*WorldEntity, error)
 	GetEntitiesByParent(ctx context.Context, db DBTX, parentID uuid.UUID) ([]*WorldEntity, error)

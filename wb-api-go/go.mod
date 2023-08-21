@@ -15,7 +15,6 @@ require (
 	github.com/stretchr/testify v1.8.3
 	go.uber.org/mock v0.2.0
 	golang.org/x/net v0.8.0
-	google.golang.org/protobuf v1.30.0
 )
 
 require (
@@ -27,6 +26,7 @@ require (
 	golang.org/x/text v0.8.0 // indirect
 	google.golang.org/genproto v0.0.0-20230306155012-7f2fa6fef1f4 // indirect
 	google.golang.org/grpc v1.55.0 // indirect
+	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
@@ -36,5 +36,5 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/ssargent/apis v0.0.0-20230801032103-c4dbf08ed904
+	github.com/ssargent/apis v0.0.0-20230809014704-971e83843b2d
 )

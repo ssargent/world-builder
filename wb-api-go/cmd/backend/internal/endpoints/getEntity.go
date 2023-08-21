@@ -31,21 +31,21 @@ func (e *EntityServer) GetEntity(
 }
 
 func fromEntity(e *entities.Entity) *entityv1.Entity {
-	ev1parent := entityv1.Parent{
+	ev1parent := entityv1.EntityParent{
 		EntityId:     e.Parent.EntityID.String(),
 		EntityName:   e.Parent.EntityName,
 		ResourceName: e.Parent.ResourceName,
 		TypeName:     e.Parent.TypeName,
 	}
 
-	ev1type := entityv1.Type{
+	ev1type := entityv1.EntityType{
 		TypeId:   e.Type.TypeID.String(),
 		TypeName: e.Type.TypeName,
 	}
 
-	ev1attribs := make([]*entityv1.Attribute, len(e.Attributes))
+	ev1attribs := make([]*entityv1.EntityAttribute, len(e.Attributes))
 	for i, a := range e.Attributes {
-		ev1attribs[i] = &entityv1.Attribute{
+		ev1attribs[i] = &entityv1.EntityAttribute{
 			Name:  a.Name,
 			Type:  a.Type,
 			Value: a.Value,

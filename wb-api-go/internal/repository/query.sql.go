@@ -51,7 +51,7 @@ func (q *Queries) CreateAttributeDefinition(ctx context.Context, db DBTX, arg *C
 const createEntity = `-- name: CreateEntity :one
 insert into world.entities
 (id, type_id, parent_id, wbrn, entity_name, entity_description, notes)
-values 
+values
 ($1, $2, $3, $4, $5, $6, $7)
 returning id, type_id, parent_id, wbrn, entity_name, entity_description, notes, created_at, updated_at
 `
@@ -94,8 +94,8 @@ func (q *Queries) CreateEntity(ctx context.Context, db DBTX, arg *CreateEntityPa
 const createEntityAssociation = `-- name: CreateEntityAssociation :one
 insert into world.entity_associations
 (entity_one, entity_two, type_id, effective_start_date, effective_end_date)
-values 
-($1, $2, $3, $4, $5) 
+values
+($1, $2, $3, $4, $5)
 returning id, entity_one, entity_two, type_id, effective_start_date, effective_end_date
 `
 
@@ -130,7 +130,7 @@ func (q *Queries) CreateEntityAssociation(ctx context.Context, db DBTX, arg *Cre
 const createEntityHistory = `-- name: CreateEntityHistory :one
 insert into world.entity_history
 (entity_id, historic_value)
-values 
+values
 ($1, $2)
 returning id, entity_id, historic_value, created_at
 `
@@ -155,7 +155,7 @@ func (q *Queries) CreateEntityHistory(ctx context.Context, db DBTX, arg *CreateE
 const createType = `-- name: CreateType :one
 insert into world.types
 (parent_id, wbtn, type_name, type_description)
-values 
+values
 ($1, $2, $3, $4)
 returning id, parent_id, wbtn, type_name, type_description, created_at, updated_at
 `
@@ -187,10 +187,61 @@ func (q *Queries) CreateType(ctx context.Context, db DBTX, arg *CreateTypeParams
 	return &i, err
 }
 
+const createTypeAttribute = `-- name: CreateTypeAttribute :one
+insert into world.type_attributes
+(type_id, attribute_id, ordinal, is_required)
+values ($1, $2, $3, $4)
+returning type_id, attribute_id, ordinal, is_required
+`
+
+type CreateTypeAttributeParams struct {
+	TypeID      uuid.UUID `json:"type_id"`
+	AttributeID uuid.UUID `json:"attribute_id"`
+	Ordinal     int32     `json:"ordinal"`
+	IsRequired  bool      `json:"is_required"`
+}
+
+func (q *Queries) CreateTypeAttribute(ctx context.Context, db DBTX, arg *CreateTypeAttributeParams) (*WorldTypeAttribute, error) {
+	row := db.QueryRowContext(ctx, createTypeAttribute,
+		arg.TypeID,
+		arg.AttributeID,
+		arg.Ordinal,
+		arg.IsRequired,
+	)
+	var i WorldTypeAttribute
+	err := row.Scan(
+		&i.TypeID,
+		&i.AttributeID,
+		&i.Ordinal,
+		&i.IsRequired,
+	)
+	return &i, err
+}
+
+const getAttributeByWBATN = `-- name: GetAttributeByWBATN :one
+select id, wbatn, attribute_name, label, data_type, created_at, updated_at from world.attribute_definitions
+where wbatn = $1
+`
+
+func (q *Queries) GetAttributeByWBATN(ctx context.Context, db DBTX, wbatn string) (*WorldAttributeDefinition, error) {
+	row := db.QueryRowContext(ctx, getAttributeByWBATN, wbatn)
+	var i WorldAttributeDefinition
+	err := row.Scan(
+		&i.ID,
+		&i.Wbatn,
+		&i.AttributeName,
+		&i.Label,
+		&i.DataType,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
 const getAttributesForType = `-- name: GetAttributesForType :many
 select ad.id, ad.wbatn, ad.attribute_name, ad.label, ad.data_type, ad.created_at, ad.updated_at from
 world.attribute_definitions ad inner join world.type_attributes ta
-on ad.id = ta.attribute_id 
+on ad.id = ta.attribute_id
 inner join world.types t on t.id = ta.type_id
 where ta.type_id = $1
 `
@@ -407,8 +458,8 @@ func (q *Queries) GetEntityAssociationsForEntity(ctx context.Context, db DBTX, e
 }
 
 const getEntityAttributes = `-- name: GetEntityAttributes :many
-select id, entity_id, attribute_id, attribute_value, created_at, updated_at from 
-world.entity_attributes 
+select id, entity_id, attribute_id, attribute_value, created_at, updated_at from
+world.entity_attributes
 where entity_id = $1
 `
 
@@ -466,7 +517,7 @@ func (q *Queries) GetEntityByWBRN(ctx context.Context, db DBTX, wbrn string) (*W
 
 const getEntityChildReferences = `-- name: GetEntityChildReferences :many
 select e.id as entity_id, e.entity_name as entity_name, e.wbrn as resource_name, t.wbtn as type_name
-from world.entities e inner join world.types t on e.type_id = t.id 
+from world.entities e inner join world.types t on e.type_id = t.id
 where e.parent_id = $1
 `
 
@@ -507,7 +558,7 @@ func (q *Queries) GetEntityChildReferences(ctx context.Context, db DBTX, parentI
 
 const getEntityHistory = `-- name: GetEntityHistory :many
 select id, entity_id, historic_value, created_at
-from world.entity_history 
+from world.entity_history
 where entity_id = $1
 order by created_at
 `
@@ -542,7 +593,7 @@ func (q *Queries) GetEntityHistory(ctx context.Context, db DBTX, entityID uuid.U
 
 const getEntityReference = `-- name: GetEntityReference :one
 select e.ID as entity_id, e.entity_name as entity_name, e.wbrn as resource_name, t.wbtn as type_name
-from world.entities e inner join world.types t on e.type_id = t.id 
+from world.entities e inner join world.types t on e.type_id = t.id
 where e.id = $1
 `
 
@@ -567,7 +618,7 @@ func (q *Queries) GetEntityReference(ctx context.Context, db DBTX, id uuid.UUID)
 
 const getEntityReferenceByWBRN = `-- name: GetEntityReferenceByWBRN :one
 select e.ID as entity_id, e.entity_name as entity_name, e.wbrn as resource_name, t.wbtn as type_name
-from world.entities e inner join world.types t on e.type_id = t.id 
+from world.entities e inner join world.types t on e.type_id = t.id
 where e.wbrn = $1
 `
 

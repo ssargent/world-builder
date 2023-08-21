@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion7
 const (
 	EntityService_GetEntity_FullMethodName   = "/worldbuilder.entity.v1.EntityService/GetEntity"
 	EntityService_GetEntities_FullMethodName = "/worldbuilder.entity.v1.EntityService/GetEntities"
+	EntityService_CreateType_FullMethodName  = "/worldbuilder.entity.v1.EntityService/CreateType"
 )
 
 // EntityServiceClient is the client API for EntityService service.
@@ -29,6 +30,7 @@ const (
 type EntityServiceClient interface {
 	GetEntity(ctx context.Context, in *GetEntityRequest, opts ...grpc.CallOption) (*GetEntityResponse, error)
 	GetEntities(ctx context.Context, in *GetEntitiesRequest, opts ...grpc.CallOption) (*GetEntitiesResponse, error)
+	CreateType(ctx context.Context, in *CreateTypeRequest, opts ...grpc.CallOption) (*CreateTypeResponse, error)
 }
 
 type entityServiceClient struct {
@@ -57,12 +59,22 @@ func (c *entityServiceClient) GetEntities(ctx context.Context, in *GetEntitiesRe
 	return out, nil
 }
 
+func (c *entityServiceClient) CreateType(ctx context.Context, in *CreateTypeRequest, opts ...grpc.CallOption) (*CreateTypeResponse, error) {
+	out := new(CreateTypeResponse)
+	err := c.cc.Invoke(ctx, EntityService_CreateType_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // EntityServiceServer is the server API for EntityService service.
 // All implementations must embed UnimplementedEntityServiceServer
 // for forward compatibility
 type EntityServiceServer interface {
 	GetEntity(context.Context, *GetEntityRequest) (*GetEntityResponse, error)
 	GetEntities(context.Context, *GetEntitiesRequest) (*GetEntitiesResponse, error)
+	CreateType(context.Context, *CreateTypeRequest) (*CreateTypeResponse, error)
 	mustEmbedUnimplementedEntityServiceServer()
 }
 
@@ -75,6 +87,9 @@ func (UnimplementedEntityServiceServer) GetEntity(context.Context, *GetEntityReq
 }
 func (UnimplementedEntityServiceServer) GetEntities(context.Context, *GetEntitiesRequest) (*GetEntitiesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetEntities not implemented")
+}
+func (UnimplementedEntityServiceServer) CreateType(context.Context, *CreateTypeRequest) (*CreateTypeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateType not implemented")
 }
 func (UnimplementedEntityServiceServer) mustEmbedUnimplementedEntityServiceServer() {}
 
@@ -125,6 +140,24 @@ func _EntityService_GetEntities_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EntityService_CreateType_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateTypeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EntityServiceServer).CreateType(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EntityService_CreateType_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EntityServiceServer).CreateType(ctx, req.(*CreateTypeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // EntityService_ServiceDesc is the grpc.ServiceDesc for EntityService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -139,6 +172,10 @@ var EntityService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetEntities",
 			Handler:    _EntityService_GetEntities_Handler,
+		},
+		{
+			MethodName: "CreateType",
+			Handler:    _EntityService_CreateType_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -38,12 +38,16 @@ const (
 	// EntityServiceGetEntitiesProcedure is the fully-qualified name of the EntityService's GetEntities
 	// RPC.
 	EntityServiceGetEntitiesProcedure = "/worldbuilder.entity.v1.EntityService/GetEntities"
+	// EntityServiceCreateTypeProcedure is the fully-qualified name of the EntityService's CreateType
+	// RPC.
+	EntityServiceCreateTypeProcedure = "/worldbuilder.entity.v1.EntityService/CreateType"
 )
 
 // EntityServiceClient is a client for the worldbuilder.entity.v1.EntityService service.
 type EntityServiceClient interface {
 	GetEntity(context.Context, *connect_go.Request[v1.GetEntityRequest]) (*connect_go.Response[v1.GetEntityResponse], error)
 	GetEntities(context.Context, *connect_go.Request[v1.GetEntitiesRequest]) (*connect_go.Response[v1.GetEntitiesResponse], error)
+	CreateType(context.Context, *connect_go.Request[v1.CreateTypeRequest]) (*connect_go.Response[v1.CreateTypeResponse], error)
 }
 
 // NewEntityServiceClient constructs a client for the worldbuilder.entity.v1.EntityService service.
@@ -66,6 +70,11 @@ func NewEntityServiceClient(httpClient connect_go.HTTPClient, baseURL string, op
 			baseURL+EntityServiceGetEntitiesProcedure,
 			opts...,
 		),
+		createType: connect_go.NewClient[v1.CreateTypeRequest, v1.CreateTypeResponse](
+			httpClient,
+			baseURL+EntityServiceCreateTypeProcedure,
+			opts...,
+		),
 	}
 }
 
@@ -73,6 +82,7 @@ func NewEntityServiceClient(httpClient connect_go.HTTPClient, baseURL string, op
 type entityServiceClient struct {
 	getEntity   *connect_go.Client[v1.GetEntityRequest, v1.GetEntityResponse]
 	getEntities *connect_go.Client[v1.GetEntitiesRequest, v1.GetEntitiesResponse]
+	createType  *connect_go.Client[v1.CreateTypeRequest, v1.CreateTypeResponse]
 }
 
 // GetEntity calls worldbuilder.entity.v1.EntityService.GetEntity.
@@ -85,10 +95,16 @@ func (c *entityServiceClient) GetEntities(ctx context.Context, req *connect_go.R
 	return c.getEntities.CallUnary(ctx, req)
 }
 
+// CreateType calls worldbuilder.entity.v1.EntityService.CreateType.
+func (c *entityServiceClient) CreateType(ctx context.Context, req *connect_go.Request[v1.CreateTypeRequest]) (*connect_go.Response[v1.CreateTypeResponse], error) {
+	return c.createType.CallUnary(ctx, req)
+}
+
 // EntityServiceHandler is an implementation of the worldbuilder.entity.v1.EntityService service.
 type EntityServiceHandler interface {
 	GetEntity(context.Context, *connect_go.Request[v1.GetEntityRequest]) (*connect_go.Response[v1.GetEntityResponse], error)
 	GetEntities(context.Context, *connect_go.Request[v1.GetEntitiesRequest]) (*connect_go.Response[v1.GetEntitiesResponse], error)
+	CreateType(context.Context, *connect_go.Request[v1.CreateTypeRequest]) (*connect_go.Response[v1.CreateTypeResponse], error)
 }
 
 // NewEntityServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -107,12 +123,19 @@ func NewEntityServiceHandler(svc EntityServiceHandler, opts ...connect_go.Handle
 		svc.GetEntities,
 		opts...,
 	)
+	entityServiceCreateTypeHandler := connect_go.NewUnaryHandler(
+		EntityServiceCreateTypeProcedure,
+		svc.CreateType,
+		opts...,
+	)
 	return "/worldbuilder.entity.v1.EntityService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case EntityServiceGetEntityProcedure:
 			entityServiceGetEntityHandler.ServeHTTP(w, r)
 		case EntityServiceGetEntitiesProcedure:
 			entityServiceGetEntitiesHandler.ServeHTTP(w, r)
+		case EntityServiceCreateTypeProcedure:
+			entityServiceCreateTypeHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -128,4 +151,8 @@ func (UnimplementedEntityServiceHandler) GetEntity(context.Context, *connect_go.
 
 func (UnimplementedEntityServiceHandler) GetEntities(context.Context, *connect_go.Request[v1.GetEntitiesRequest]) (*connect_go.Response[v1.GetEntitiesResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("worldbuilder.entity.v1.EntityService.GetEntities is not implemented"))
+}
+
+func (UnimplementedEntityServiceHandler) CreateType(context.Context, *connect_go.Request[v1.CreateTypeRequest]) (*connect_go.Response[v1.CreateTypeResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("worldbuilder.entity.v1.EntityService.CreateType is not implemented"))
 }
