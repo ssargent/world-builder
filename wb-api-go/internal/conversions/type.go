@@ -5,9 +5,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/ssargent/world-builder/wb-api-go/pkg/entities"
-
 	entityv1 "github.com/ssargent/apis/pkg/worldbuilder/entity/v1"
+	"github.com/ssargent/world-builder/wb-api-go/pkg/entities"
 )
 
 func EntityType(in *entityv1.Type) (*entities.EntityType, error) {

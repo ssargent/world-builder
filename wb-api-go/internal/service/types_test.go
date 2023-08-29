@@ -9,6 +9,7 @@ import (
 	"github.com/ssargent/world-builder/wb-api-go/pkg/entities"
 )
 
+//nolint:containedctx // this is a test
 func TestTypeService_CreateType(t *testing.T) {
 	type fields struct {
 		cache   Cache

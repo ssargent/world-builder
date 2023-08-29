@@ -14,8 +14,8 @@ import (
 
 type TypeService struct {
 	cache   Cache
-	reader  *sqlx.DB
-	writer  *sqlx.DB
+	reader  ReaderDB
+	writer  WriterDB
 	queries EntityDataProvider
 }
 
@@ -75,15 +75,16 @@ func (t *TypeService) CreateType(ctx context.Context, in *entities.EntityType) (
 	}
 
 	if err := txn.Commit(); err != nil {
-		return nil, fmt.Errorf("Commit: %w", err)
+		return nil, fmt.Errorf("commit: %w", err)
 	}
 
 	return fullType, nil
 }
 
-// most likely entity service will take a reference to type service and leverage this code.  so code in other file will go away.
+// most likely entity service will take a reference to type service and leverage this code.
+// so code in other file will go away.
 //
-//nolint:godupl // ok for duplicate while I figure out how this should work.
+//nolint:dupl // ok for duplicate while I figure out how this should work.
 func (t *TypeService) getType(
 	ctx context.Context,
 	db repository.DBTX,

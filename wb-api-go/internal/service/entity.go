@@ -192,6 +192,7 @@ func (e *EntityService) populateAttributes(ctx context.Context, db repository.DB
 	return nil
 }
 
+//nolint:dupl // ok for duplication here.
 func (e *EntityService) getType(
 	ctx context.Context,
 	db repository.DBTX,
