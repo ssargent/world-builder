@@ -1,10 +1,32 @@
 package repository
 
+//go:generate mockgen -source=interface.go  -aux_files=github.com/ssargent/world-builder/wb-api-go/internal/repository=db.go -destination mocks/repository.go  github.com/ssargent/world-builder/wb-api-go/internal/repository  WriterDB, ReaderDB, Transaction, Manager
+
 import (
 	"context"
+	"database/sql"
 
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 )
+
+type Manager interface {
+	Transaction(ctx context.Context, db WriterDB, opts *sql.TxOptions) (Transaction, error)
+}
+type WriterDB interface {
+	DBTX
+	BeginTxx(ctx context.Context, opts *sql.TxOptions) (*sqlx.Tx, error)
+}
+
+type ReaderDB interface {
+	DBTX
+}
+
+type Transaction interface {
+	DBTX
+	Commit() error
+	Rollback() error
+}
 
 type AttributeDefinitionQuerier interface {
 	CreateAttributeDefinition(

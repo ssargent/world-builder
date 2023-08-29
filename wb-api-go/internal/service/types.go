@@ -14,8 +14,9 @@ import (
 
 type TypeService struct {
 	cache   Cache
-	reader  ReaderDB
-	writer  WriterDB
+	reader  repository.ReaderDB
+	writer  repository.WriterDB
+	manager repository.Manager
 	queries EntityDataProvider
 }
 
@@ -24,6 +25,7 @@ func NewTypeService(c *cache.Cache, rdb, wdb *sqlx.DB, queries EntityDataProvide
 		cache:   c,
 		reader:  rdb,
 		writer:  wdb,
+		manager: repository.NewManager(),
 		queries: queries,
 	}
 }
@@ -37,10 +39,14 @@ func (t *TypeService) CreateType(ctx context.Context, in *entities.EntityType) (
 		TypeDescription: in.TypeDescription,
 	}
 
-	txn, err := t.writer.BeginTxx(ctx, &sql.TxOptions{})
+	//Manager just wraps BeginTxx and returns an interface, so we can easily test.
+	m := repository.NewManager()
+
+	txn, err := m.Transaction(ctx, t.writer, &sql.TxOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("BeginTxx: %w", err)
 	}
+	defer txn.Rollback()
 
 	created, err := t.queries.CreateType(ctx, txn, &createTypeParam)
 	if err != nil {

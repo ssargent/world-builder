@@ -2,19 +2,21 @@ package service
 
 import (
 	"context"
-	"reflect"
 	"testing"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/ssargent/world-builder/wb-api-go/internal/repository"
+	mock_repository "github.com/ssargent/world-builder/wb-api-go/internal/repository/mocks"
+	mock_service "github.com/ssargent/world-builder/wb-api-go/internal/service/mocks"
 	"github.com/ssargent/world-builder/wb-api-go/pkg/entities"
+	"go.uber.org/mock/gomock"
 )
 
-//nolint:containedctx // this is a test
 func TestTypeService_CreateType(t *testing.T) {
 	type fields struct {
 		cache   Cache
-		reader  *sqlx.DB
-		writer  *sqlx.DB
+		reader  repository.ReaderDB
+		writer  repository.WriterDB
+		manager repository.Manager
 		queries EntityDataProvider
 	}
 	type args struct {
@@ -22,16 +24,30 @@ func TestTypeService_CreateType(t *testing.T) {
 		in  *entities.EntityType
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *entities.EntityType
-		wantErr bool
+		name   string
+		fields fields
+		args   args
+		mock   func(*fields)
+		want   func(*entities.EntityType, error)
 	}{
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			f := fields{
+				cache:   mock_service.NewMockCache(ctrl),
+				reader:  mock_repository.NewMockReaderDB(ctrl),
+				writer:  mock_repository.NewMockWriterDB(ctrl),
+				manager: mock_repository.NewMockManager(ctrl),
+				queries: mock_service.NewMockEntityDataProvider(ctrl),
+			}
+			if tt.mock != nil {
+				tt.mock(&f)
+			}
+
 			tr := &TypeService{
 				cache:   tt.fields.cache,
 				reader:  tt.fields.reader,
@@ -39,13 +55,7 @@ func TestTypeService_CreateType(t *testing.T) {
 				queries: tt.fields.queries,
 			}
 			got, err := tr.CreateType(tt.args.ctx, tt.args.in)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("TypeService.CreateType() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("TypeService.CreateType() = %v, want %v", got, tt.want)
-			}
+			tt.want(got, err)
 		})
 	}
 }
