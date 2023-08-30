@@ -32,3 +32,4 @@ linters:
     - nosnakecase
     - deadcode
     - varcheck
+    - depguard
