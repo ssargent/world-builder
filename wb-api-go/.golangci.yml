@@ -33,3 +33,4 @@ linters:
     - deadcode
     - varcheck
     - depguard
+    - tagalign

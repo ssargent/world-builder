@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/ssargent/world-builder/wb-api-go/internal/repository"
+	"github.com/ssargent/world-builder/wb-api-go/pkg/entities"
 )
 
 func UUID(id int8) uuid.UUID {
@@ -71,6 +72,25 @@ func AttributesForType(id int8) []*repository.WorldAttributeDefinition {
 	})
 
 	return defs
+}
+
+func TypeAttribute(tid, id int8, ord int32, required bool) *repository.WorldTypeAttribute {
+	return &repository.WorldTypeAttribute{
+		TypeID:      UUID(tid),
+		AttributeID: UUID(id),
+		Ordinal:     ord,
+		IsRequired:  required,
+	}
+}
+
+func Attribute(id int8, wbatn string) *entities.Attribute {
+	return &entities.Attribute{
+		ID:            UUID(id),
+		Wbatn:         wbatn,
+		AttributeName: wbatn,
+		Label:         "Label",
+		DataType:      "dt",
+	}
 }
 
 func EntityAttributes(id int8) []*repository.WorldEntityAttribute {

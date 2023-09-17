@@ -39,13 +39,11 @@ func (t *TypeService) CreateType(ctx context.Context, in *entities.EntityType) (
 		TypeDescription: in.TypeDescription,
 	}
 
-	//Manager just wraps BeginTxx and returns an interface, so we can easily test.
-	m := repository.NewManager()
-
-	txn, err := m.Transaction(ctx, t.writer, &sql.TxOptions{})
+	txn, err := t.manager.Transaction(ctx, t.writer, &sql.TxOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("BeginTxx: %w", err)
 	}
+	//nolint:errcheck // we are going to check the error on commit.
 	defer txn.Rollback()
 
 	created, err := t.queries.CreateType(ctx, txn, &createTypeParam)
