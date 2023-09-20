@@ -114,10 +114,7 @@ func TestTypeService_CreateType(t *testing.T) {
 					TypeDescription: "MyType is a type",
 					Attributes: []*entities.Attribute{
 						{
-							Wbatn: "wbatn:coordinates",
-						},
-						{
-							Wbatn: "wbatn:faction",
+							Wbatn: "wbatn:missing-attribute",
 						},
 					},
 				},
