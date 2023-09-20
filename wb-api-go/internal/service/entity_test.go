@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/ssargent/world-builder/wb-api-go/internal/repository"
+	mock_repository "github.com/ssargent/world-builder/wb-api-go/internal/repository/mocks"
 	mock_service "github.com/ssargent/world-builder/wb-api-go/internal/service/mocks"
 	"github.com/ssargent/world-builder/wb-api-go/internal/tools"
 	"github.com/ssargent/world-builder/wb-api-go/pkg/entities"
@@ -16,8 +17,9 @@ import (
 func TestEntityService_get(t *testing.T) {
 	type fields struct {
 		c       *mock_service.MockCache
-		db      repository.DBTX
+		db      *mock_repository.MockWriterDB
 		queries *mock_service.MockEntityDataProvider
+		manager *mock_repository.MockManager
 	}
 	type args struct {
 		ctx          context.Context //nolint:containedctx // ok here.
@@ -81,15 +83,18 @@ func TestEntityService_get(t *testing.T) {
 			f := fields{
 				c:       mock_service.NewMockCache(ctrl),
 				queries: mock_service.NewMockEntityDataProvider(ctrl),
+				db:      mock_repository.NewMockWriterDB(ctrl),
+				manager: mock_repository.NewMockManager(ctrl),
 			}
 			if tt.mock != nil {
 				tt.mock(&f)
 			}
 
 			e := &EntityService{
-				c:       f.c,
-				rdb:     f.db,
-				wdb:     f.db,
+				cache:   f.c,
+				reader:  f.db,
+				writer:  f.db,
+				manager: f.manager,
 				queries: f.queries,
 			}
 			got, err := e.get(tt.args.ctx, tt.args.db, tt.args.id, tt.args.associations, tt.args.attributes, tt.args.children)

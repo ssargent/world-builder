@@ -30,13 +30,16 @@ type Entity struct {
 }
 
 type Attribute struct {
-	ID            uuid.UUID    `json:"id"`
-	Wbatn         string       `json:"wbatn"`
-	AttributeName string       `json:"attribute_name"`
-	Label         string       `json:"label"`
-	DataType      string       `json:"data_type"`
-	CreatedAt     sql.NullTime `json:"created_at"`
-	UpdatedAt     sql.NullTime `json:"updated_at"`
+	ID            uuid.UUID    `json:"id,omitempty"`
+	Wbatn         string       `json:"wbatn,omitempty"`
+	AttributeName string       `json:"attribute_name,omitempty"`
+	Label         string       `json:"label,omitempty"`
+	DataType      string       `json:"data_type,omitempty"`
+	CreatedAt     sql.NullTime `json:"created_at,omitempty"`
+	UpdatedAt     sql.NullTime `json:"updated_at,omitempty"`
+
+	IsRequired bool `json:"is_required,omitempty" db:"-"`
+	Ordinal    int  `json:"ordinal,omitempty" db:"-"`
 }
 
 type EntityAttribute struct {

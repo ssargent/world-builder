@@ -42,6 +42,12 @@ values
 ($1, $2, $3, $4)
 returning *;
 
+-- name: GetFullTypeAttributes :many
+select ad.*, ta.ordinal, ta.is_required from world.attribute_definitions ad
+inner join world.type_attributes ta
+on ta.attribute_id = ad.id
+where ta.type_id = $1;
+
 -- name: GetEntity :one
 select e.* from world.entities e where id = $1;
 

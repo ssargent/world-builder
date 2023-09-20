@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -12,23 +13,27 @@ import (
 )
 
 type EntityService struct {
-	c       Cache
-	rdb     repository.DBTX
-	wdb     repository.DBTX
-	queries EntityDataProvider
+	cache       Cache
+	reader      repository.ReaderDB
+	writer      repository.WriterDB
+	manager     repository.Manager
+	queries     EntityDataProvider
+	typeService TypeService
 }
 
 func NewEntityService(c *cache.Cache, rdb, wdb *sqlx.DB, queries EntityDataProvider) *EntityService {
 	return &EntityService{
-		c:       c,
-		rdb:     rdb,
-		wdb:     wdb,
-		queries: queries,
+		cache:       c,
+		reader:      rdb,
+		writer:      wdb,
+		manager:     repository.NewManager(),
+		queries:     queries,
+		typeService: *NewTypeService(c, rdb, wdb, queries),
 	}
 }
 
 func (e *EntityService) FilterByCriteria(ctx context.Context, wbtn, parentWBRN string) ([]*entities.Entity, error) {
-	cached, found := e.c.Get(fmt.Sprintf("entities-filtered/%s/%s", wbtn, parentWBRN))
+	cached, found := e.cache.Get(fmt.Sprintf("entities-filtered/%s/%s", wbtn, parentWBRN))
 	if found {
 		data, ok := cached.([]*entities.Entity)
 		if ok {
@@ -41,14 +46,14 @@ func (e *EntityService) FilterByCriteria(ctx context.Context, wbtn, parentWBRN s
 		Wbtn: wbtn,
 	}
 
-	dbents, err := e.queries.GetEntitiesByCriteria(ctx, e.rdb, &filter)
+	dbents, err := e.queries.GetEntitiesByCriteria(ctx, e.reader, &filter)
 	if err != nil {
 		return nil, fmt.Errorf("GetEntitiesByCriteria: %w", err)
 	}
 
 	ents := make([]*entities.Entity, len(dbents))
 	for i, dbentity := range dbents {
-		tmpe, err := e.get(ctx, e.rdb, dbentity.ID, false, true, false)
+		tmpe, err := e.get(ctx, e.reader, dbentity.ID, false, true, false)
 		if err != nil {
 			return nil, fmt.Errorf("get(entity): %w", err)
 		}
@@ -56,12 +61,12 @@ func (e *EntityService) FilterByCriteria(ctx context.Context, wbtn, parentWBRN s
 		ents[i] = tmpe
 	}
 
-	e.c.Set(fmt.Sprintf("entities-filtered/%s/%s", wbtn, parentWBRN), ents, cache.DefaultExpiration)
+	e.cache.Set(fmt.Sprintf("entities-filtered/%s/%s", wbtn, parentWBRN), ents, cache.DefaultExpiration)
 	return ents, nil
 }
 
 func (e *EntityService) FindByID(ctx context.Context, id uuid.UUID) (*entities.Entity, error) {
-	cached, found := e.c.Get(fmt.Sprintf("entity/%s", id))
+	cached, found := e.cache.Get(fmt.Sprintf("entity/%s", id))
 	if found {
 		data, ok := cached.(*entities.Entity)
 		if ok {
@@ -69,22 +74,22 @@ func (e *EntityService) FindByID(ctx context.Context, id uuid.UUID) (*entities.E
 		}
 	}
 
-	ent, err := e.get(ctx, e.rdb, id, true, true, true)
+	ent, err := e.get(ctx, e.reader, id, true, true, true)
 	if err != nil {
 		return nil, fmt.Errorf("get: %w", err)
 	}
 
-	e.c.Set(fmt.Sprintf("entity:%s", id), ent, cache.DefaultExpiration)
+	e.cache.Set(fmt.Sprintf("entity:%s", id), ent, cache.DefaultExpiration)
 	return ent, nil
 }
 
 func (e *EntityService) FindByWBRN(ctx context.Context, wbrn string) (*entities.Entity, error) {
-	ref, err := e.queries.GetEntityReferenceByWBRN(ctx, e.rdb, wbrn)
+	ref, err := e.queries.GetEntityReferenceByWBRN(ctx, e.reader, wbrn)
 	if err != nil {
 		return nil, fmt.Errorf("GetEntityReferenceByWBRN: %w", err)
 	}
 
-	cached, found := e.c.Get(fmt.Sprintf("entity:%s", ref.EntityID))
+	cached, found := e.cache.Get(fmt.Sprintf("entity:%s", ref.EntityID))
 	if found {
 		data, ok := cached.(*entities.Entity)
 		if ok {
@@ -92,12 +97,12 @@ func (e *EntityService) FindByWBRN(ctx context.Context, wbrn string) (*entities.
 		}
 	}
 
-	ent, err := e.get(ctx, e.rdb, ref.EntityID, true, true, true)
+	ent, err := e.get(ctx, e.reader, ref.EntityID, true, true, true)
 	if err != nil {
 		return nil, fmt.Errorf("get: %w", err)
 	}
 
-	e.c.Set(fmt.Sprintf("entity/%s", ref.EntityID), ent, cache.DefaultExpiration)
+	e.cache.Set(fmt.Sprintf("entity/%s", ref.EntityID), ent, cache.DefaultExpiration)
 	return ent, nil
 }
 
@@ -285,6 +290,44 @@ func (e *EntityService) getTypeAttributes(
 	return attribs, nil
 }
 
-/*func (e *EntityService) UpdateByID(_ uuid.UUID) (*entities.Entity, error) {
+// CreateEntity creates a new entity in the database.
+func (e *EntityService) CreateEntity(ctx context.Context, entity *entities.Entity) (*entities.Entity, error) {
+	txn, err := e.manager.Transaction(ctx, e.writer, &sql.TxOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("Transaction: %w", err)
+	}
+	//nolint:errcheck // will check the commit error
+	defer txn.Rollback()
+
+	entityType, err := e.queries.GetTypeByWBTN(ctx, txn, entity.Type.TypeName)
+	if err != nil {
+		return nil, fmt.Errorf("GetTypeByWBTN: %w", err)
+	}
+
+	createEntityParams := repository.CreateEntityParams{
+		Wbrn:              entity.ResourceName,
+		EntityName:        entity.Name,
+		EntityDescription: entity.Description,
+		Notes:             sql.NullString{String: entity.Notes, Valid: true},
+		ParentID:          entity.Parent.EntityID,
+		TypeID:            entityType.ID,
+	}
+
+	// create the entity
+	created, err := e.queries.CreateEntity(ctx, txn, &createEntityParams)
+	if err != nil {
+		return nil, fmt.Errorf("CreateEntity: %w", err)
+	}
+
+	// // we've created the entity, check to see if it has required mandatory attributes.
+	// typeAttributes, err := e.queries.GetAttributesForType(ctx, e.reader, created.TypeID)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("GetAttributesForType: %w", err)
+	// }
+
+	if err := txn.Commit(); err != nil {
+		return nil, fmt.Errorf("commit: %w", err)
+	}
+
 	return nil, nil
-}*/
+}

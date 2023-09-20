@@ -30,6 +30,7 @@ type Querier interface {
 	GetEntityHistory(ctx context.Context, db DBTX, entityID uuid.UUID) ([]*WorldEntityHistory, error)
 	GetEntityReference(ctx context.Context, db DBTX, id uuid.UUID) (*GetEntityReferenceRow, error)
 	GetEntityReferenceByWBRN(ctx context.Context, db DBTX, wbrn string) (*GetEntityReferenceByWBRNRow, error)
+	GetFullTypeAttributes(ctx context.Context, db DBTX, typeID uuid.UUID) ([]*GetFullTypeAttributesRow, error)
 	GetTypeByID(ctx context.Context, db DBTX, id uuid.UUID) (*WorldType, error)
 	GetTypeByWBTN(ctx context.Context, db DBTX, wbtn string) (*WorldType, error)
 }

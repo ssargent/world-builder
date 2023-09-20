@@ -641,6 +641,58 @@ func (q *Queries) GetEntityReferenceByWBRN(ctx context.Context, db DBTX, wbrn st
 	return &i, err
 }
 
+const getFullTypeAttributes = `-- name: GetFullTypeAttributes :many
+select ad.id, ad.wbatn, ad.attribute_name, ad.label, ad.data_type, ad.created_at, ad.updated_at, ta.ordinal, ta.is_required from world.attribute_definitions ad
+inner join world.type_attributes ta
+on ta.attribute_id = ad.id
+where ta.type_id = $1
+`
+
+type GetFullTypeAttributesRow struct {
+	ID            uuid.UUID    `json:"id"`
+	Wbatn         string       `json:"wbatn"`
+	AttributeName string       `json:"attribute_name"`
+	Label         string       `json:"label"`
+	DataType      string       `json:"data_type"`
+	CreatedAt     sql.NullTime `json:"created_at"`
+	UpdatedAt     sql.NullTime `json:"updated_at"`
+	Ordinal       int32        `json:"ordinal"`
+	IsRequired    bool         `json:"is_required"`
+}
+
+func (q *Queries) GetFullTypeAttributes(ctx context.Context, db DBTX, typeID uuid.UUID) ([]*GetFullTypeAttributesRow, error) {
+	rows, err := db.QueryContext(ctx, getFullTypeAttributes, typeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetFullTypeAttributesRow
+	for rows.Next() {
+		var i GetFullTypeAttributesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Wbatn,
+			&i.AttributeName,
+			&i.Label,
+			&i.DataType,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Ordinal,
+			&i.IsRequired,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getTypeByID = `-- name: GetTypeByID :one
 select id, parent_id, wbtn, type_name, type_description, created_at, updated_at from world.types
 where id = $1
