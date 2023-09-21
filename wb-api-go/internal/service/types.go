@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -12,7 +13,7 @@ import (
 	"github.com/ssargent/world-builder/wb-api-go/pkg/entities"
 )
 
-type TypeService struct {
+type typeService struct {
 	cache   Cache
 	reader  repository.ReaderDB
 	writer  repository.WriterDB
@@ -20,8 +21,8 @@ type TypeService struct {
 	queries EntityDataProvider
 }
 
-func NewTypeService(c *cache.Cache, rdb, wdb *sqlx.DB, queries EntityDataProvider) *TypeService {
-	return &TypeService{
+func NewTypeService(c *cache.Cache, rdb, wdb *sqlx.DB, queries EntityDataProvider) TypeService {
+	return &typeService{
 		cache:   c,
 		reader:  rdb,
 		writer:  wdb,
@@ -31,7 +32,7 @@ func NewTypeService(c *cache.Cache, rdb, wdb *sqlx.DB, queries EntityDataProvide
 }
 
 // CreateType will create a new type in the database.
-func (t *TypeService) CreateType(ctx context.Context, in *entities.EntityType) (*entities.EntityType, error) {
+func (t *typeService) CreateType(ctx context.Context, in *entities.EntityType) (*entities.EntityType, error) {
 	createTypeParam := repository.CreateTypeParams{
 		ParentID:        in.Parent.TypeID,
 		Wbtn:            in.Wbtn,
@@ -85,15 +86,63 @@ func (t *TypeService) CreateType(ctx context.Context, in *entities.EntityType) (
 	return fullType, nil
 }
 
+func (t *typeService) GetType(ctx context.Context, typeRef *entities.TypeReference) (*entities.EntityType, error) {
+	if typeRef == nil {
+		return nil, errors.New("typeRef is null")
+	}
+
+	if typeRef.TypeID == uuid.Nil && typeRef.TypeName == "" {
+		return nil, errors.New("typeRef is empty")
+	}
+
+	if typeRef.TypeName != "" {
+		return t.getTypeByName(ctx, t.reader, typeRef.TypeName)
+	}
+
+	wbtype, err := t.getType(ctx, t.reader, typeRef.TypeID, true)
+	if err != nil {
+		return nil, fmt.Errorf("getType: %w", err)
+	}
+
+	return wbtype, nil
+}
+
+func (t *typeService) getTypeByName(ctx context.Context, db repository.DBTX, name string) (*entities.EntityType, error) {
+	// cachedType, found := t.cache.Get(wbtnCacheKey(name))
+	// if found {
+	// 	return cachedType.(*entities.EntityType), nil
+	// }
+
+	tmpTyp, err := t.queries.GetTypeByWBTN(ctx, db, name)
+	if err != nil {
+		return nil, fmt.Errorf("GetTypeByWBTN: %w", err)
+	}
+
+	wbType, err := t.getType(ctx, db, tmpTyp.ID, true)
+	if err != nil {
+		return nil, fmt.Errorf("getType: %w", err)
+	}
+
+	//t.cache.Set(wbtnCacheKey(name), wbType, cache.DefaultExpiration)
+
+	return wbType, nil
+}
+
 // most likely entity service will take a reference to type service and leverage this code.
 // so code in other file will go away.
 //
 //nolint:dupl // ok for duplicate while I figure out how this should work.
-func (t *TypeService) getType(
+func (t *typeService) getType(
 	ctx context.Context,
 	db repository.DBTX,
 	id uuid.UUID,
 	attributeDefinitions bool) (*entities.EntityType, error) {
+
+	/*cachedType, found := t.cache.Get(typeIdCacheKey(id))
+	if found {
+		return cachedType.(*entities.EntityType), nil
+	}*/
+
 	wt, err := t.queries.GetTypeByID(ctx, db, id)
 	if err != nil {
 		return nil, fmt.Errorf("GetTypeByID: %w", err)
@@ -119,7 +168,7 @@ func (t *TypeService) getType(
 	}
 
 	if attributeDefinitions {
-		atts, err := t.queries.GetAttributesForType(ctx, db, id)
+		atts, err := t.queries.GetFullTypeAttributes(ctx, db, id)
 		if err != nil {
 			return nil, fmt.Errorf("GetAttributesForType: %w", err)
 		}
@@ -135,14 +184,18 @@ func (t *TypeService) getType(
 				Label:         at.Label,
 				CreatedAt:     at.CreatedAt,
 				UpdatedAt:     at.UpdatedAt,
+				IsRequired:    at.IsRequired,
+				Ordinal:       int(at.Ordinal),
 			}
 		}
 	}
 
+	//	t.cache.Set(typeIdCacheKey(id), &entityType, cache.DefaultExpiration)
+
 	return &entityType, nil
 }
 
-func (t *TypeService) getAttribute(ctx context.Context, db repository.DBTX, wbatn string) (*entities.Attribute, error) {
+func (t *typeService) getAttribute(ctx context.Context, db repository.DBTX, wbatn string) (*entities.Attribute, error) {
 	attr, found := t.cache.Get(wbatn)
 	if found {
 		a, ok := attr.(*entities.Attribute)
@@ -167,4 +220,12 @@ func (t *TypeService) getAttribute(ctx context.Context, db repository.DBTX, wbat
 		CreatedAt:     attribute.CreatedAt,
 		UpdatedAt:     attribute.UpdatedAt,
 	}, nil
+}
+
+func wbtnCacheKey(name string) string {
+	return fmt.Sprintf("wbtn:%s", name)
+}
+
+func typeIdCacheKey(id uuid.UUID) string {
+	return fmt.Sprintf("type-id:%s", id.String())
 }

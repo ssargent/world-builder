@@ -11,6 +11,7 @@ import (
 
 	uuid "github.com/google/uuid"
 	repository "github.com/ssargent/world-builder/wb-api-go/internal/repository"
+	entities "github.com/ssargent/world-builder/wb-api-go/pkg/entities"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -80,6 +81,21 @@ func (m *MockEntityDataProvider) CreateEntityAssociation(ctx context.Context, db
 func (mr *MockEntityDataProviderMockRecorder) CreateEntityAssociation(ctx, db, arg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateEntityAssociation", reflect.TypeOf((*MockEntityDataProvider)(nil).CreateEntityAssociation), ctx, db, arg)
+}
+
+// CreateEntityAttribute mocks base method.
+func (m *MockEntityDataProvider) CreateEntityAttribute(ctx context.Context, db repository.DBTX, arg *repository.CreateEntityAttributeParams) (*repository.WorldEntityAttribute, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateEntityAttribute", ctx, db, arg)
+	ret0, _ := ret[0].(*repository.WorldEntityAttribute)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateEntityAttribute indicates an expected call of CreateEntityAttribute.
+func (mr *MockEntityDataProviderMockRecorder) CreateEntityAttribute(ctx, db, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateEntityAttribute", reflect.TypeOf((*MockEntityDataProvider)(nil).CreateEntityAttribute), ctx, db, arg)
 }
 
 // CreateEntityHistory mocks base method.
@@ -322,6 +338,21 @@ func (mr *MockEntityDataProviderMockRecorder) GetEntityReferenceByWBRN(ctx, db, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityReferenceByWBRN", reflect.TypeOf((*MockEntityDataProvider)(nil).GetEntityReferenceByWBRN), ctx, db, wbrn)
 }
 
+// GetFullTypeAttributes mocks base method.
+func (m *MockEntityDataProvider) GetFullTypeAttributes(ctx context.Context, db repository.DBTX, id uuid.UUID) ([]*repository.GetFullTypeAttributesRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFullTypeAttributes", ctx, db, id)
+	ret0, _ := ret[0].([]*repository.GetFullTypeAttributesRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFullTypeAttributes indicates an expected call of GetFullTypeAttributes.
+func (mr *MockEntityDataProviderMockRecorder) GetFullTypeAttributes(ctx, db, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFullTypeAttributes", reflect.TypeOf((*MockEntityDataProvider)(nil).GetFullTypeAttributes), ctx, db, id)
+}
+
 // GetTypeByID mocks base method.
 func (m *MockEntityDataProvider) GetTypeByID(ctx context.Context, db repository.DBTX, id uuid.UUID) (*repository.WorldType, error) {
 	m.ctrl.T.Helper()
@@ -400,4 +431,57 @@ func (m *MockCache) Set(k string, x interface{}, d time.Duration) {
 func (mr *MockCacheMockRecorder) Set(k, x, d interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockCache)(nil).Set), k, x, d)
+}
+
+// MockTypeService is a mock of TypeService interface.
+type MockTypeService struct {
+	ctrl     *gomock.Controller
+	recorder *MockTypeServiceMockRecorder
+}
+
+// MockTypeServiceMockRecorder is the mock recorder for MockTypeService.
+type MockTypeServiceMockRecorder struct {
+	mock *MockTypeService
+}
+
+// NewMockTypeService creates a new mock instance.
+func NewMockTypeService(ctrl *gomock.Controller) *MockTypeService {
+	mock := &MockTypeService{ctrl: ctrl}
+	mock.recorder = &MockTypeServiceMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockTypeService) EXPECT() *MockTypeServiceMockRecorder {
+	return m.recorder
+}
+
+// CreateType mocks base method.
+func (m *MockTypeService) CreateType(ctx context.Context, in *entities.EntityType) (*entities.EntityType, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateType", ctx, in)
+	ret0, _ := ret[0].(*entities.EntityType)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateType indicates an expected call of CreateType.
+func (mr *MockTypeServiceMockRecorder) CreateType(ctx, in interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateType", reflect.TypeOf((*MockTypeService)(nil).CreateType), ctx, in)
+}
+
+// GetType mocks base method.
+func (m *MockTypeService) GetType(ctx context.Context, typeRef *entities.TypeReference) (*entities.EntityType, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetType", ctx, typeRef)
+	ret0, _ := ret[0].(*entities.EntityType)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetType indicates an expected call of GetType.
+func (mr *MockTypeServiceMockRecorder) GetType(ctx, typeRef interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetType", reflect.TypeOf((*MockTypeService)(nil).GetType), ctx, typeRef)
 }

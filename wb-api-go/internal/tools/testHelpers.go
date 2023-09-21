@@ -74,6 +74,36 @@ func AttributesForType(id int8) []*repository.WorldAttributeDefinition {
 	return defs
 }
 
+func FullAttributesForType(id int8) []*repository.GetFullTypeAttributesRow {
+	defs := make([]*repository.GetFullTypeAttributesRow, 0)
+
+	defs = append(defs, &repository.GetFullTypeAttributesRow{
+		ID:            UUID(10),
+		Wbatn:         fmt.Sprintf("wban:test"),
+		AttributeName: fmt.Sprintf("attribute%d-1", id),
+		Label:         fmt.Sprintf("attribute%d-1", id),
+		DataType:      "string",
+		CreatedAt:     sql.NullTime{Time: time.Now()},
+		UpdatedAt:     sql.NullTime{Time: time.Now()},
+		IsRequired:    true,
+		Ordinal:       1,
+	})
+
+	defs = append(defs, &repository.GetFullTypeAttributesRow{
+		ID:            UUID(11),
+		Wbatn:         fmt.Sprintf("wban:test2"),
+		AttributeName: fmt.Sprintf("attribute%d-2", id),
+		Label:         fmt.Sprintf("attribute%d-2", id),
+		DataType:      "string",
+		CreatedAt:     sql.NullTime{Time: time.Now()},
+		UpdatedAt:     sql.NullTime{Time: time.Now()},
+		IsRequired:    false,
+		Ordinal:       2,
+	})
+
+	return defs
+}
+
 func TypeAttribute(tid, id int8, ord int32, required bool) *repository.WorldTypeAttribute {
 	return &repository.WorldTypeAttribute{
 		TypeID:      UUID(tid),

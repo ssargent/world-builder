@@ -14,6 +14,7 @@ type Querier interface {
 	CreateAttributeDefinition(ctx context.Context, db DBTX, arg *CreateAttributeDefinitionParams) (*WorldAttributeDefinition, error)
 	CreateEntity(ctx context.Context, db DBTX, arg *CreateEntityParams) (*WorldEntity, error)
 	CreateEntityAssociation(ctx context.Context, db DBTX, arg *CreateEntityAssociationParams) (*WorldEntityAssociation, error)
+	CreateEntityAttribute(ctx context.Context, db DBTX, arg *CreateEntityAttributeParams) (*WorldEntityAttribute, error)
 	CreateEntityHistory(ctx context.Context, db DBTX, arg *CreateEntityHistoryParams) (*WorldEntityHistory, error)
 	CreateType(ctx context.Context, db DBTX, arg *CreateTypeParams) (*WorldType, error)
 	CreateTypeAttribute(ctx context.Context, db DBTX, arg *CreateTypeAttributeParams) (*WorldTypeAttribute, error)

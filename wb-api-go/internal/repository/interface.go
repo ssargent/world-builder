@@ -63,11 +63,13 @@ type TypeQuerier interface {
 	CreateTypeAttribute(ctx context.Context, db DBTX, arg *CreateTypeAttributeParams) (*WorldTypeAttribute, error)
 	GetTypeByID(ctx context.Context, db DBTX, id uuid.UUID) (*WorldType, error)
 	GetTypeByWBTN(ctx context.Context, db DBTX, wbtn string) (*WorldType, error)
+	GetFullTypeAttributes(ctx context.Context, db DBTX, id uuid.UUID) ([]*GetFullTypeAttributesRow, error)
 }
 
 type EntityAttributeQuerier interface {
 	GetEntityAttributes(ctx context.Context, db DBTX, entityID uuid.UUID) ([]*WorldEntityAttribute, error)
 	GetAttributeByWBATN(ctx context.Context, db DBTX, wbatn string) (*WorldAttributeDefinition, error)
+	CreateEntityAttribute(ctx context.Context, db DBTX, arg *CreateEntityAttributeParams) (*WorldEntityAttribute, error)
 }
 
 type ReferenceQuerier interface {

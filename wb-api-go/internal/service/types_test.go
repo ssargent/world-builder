@@ -81,9 +81,9 @@ func TestTypeService_CreateType(t *testing.T) {
 					Times(1).
 					Return(tools.EntityType(9, 11), nil)
 				f.queries.EXPECT().
-					GetAttributesForType(gomock.Any(), gomock.Any(), tools.UUID(2)).
+					GetFullTypeAttributes(gomock.Any(), gomock.Any(), tools.UUID(2)).
 					Times(1).
-					Return(tools.AttributesForType(2), nil)
+					Return(tools.FullAttributesForType(2), nil)
 				f.manager.EXPECT().
 					Transaction(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
@@ -168,7 +168,7 @@ func TestTypeService_CreateType(t *testing.T) {
 				tt.mock(&f)
 			}
 
-			tr := &TypeService{
+			tr := &typeService{
 				cache:   tt.fields.cache,
 				reader:  tt.fields.reader,
 				writer:  tt.fields.writer,

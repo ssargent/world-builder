@@ -119,3 +119,9 @@ select e.ID as entity_id, e.entity_name as entity_name, e.wbrn as resource_name,
 from world.entities e inner join world.types t on e.type_id = t.id
 where e.wbrn = $1;
 
+-- name: CreateEntityAttribute :one
+insert into world.entity_attributes
+(entity_id, attribute_id, attribute_value)
+values
+($1, $2, $3)
+returning *;

@@ -12,9 +12,13 @@ import (
 func EntityType(in *entityv1.Type) (*entities.EntityType, error) {
 	var e entities.EntityType
 
-	TypeID, err := uuid.Parse(in.TypeId)
-	if err != nil {
-		return nil, fmt.Errorf("uuid.Parse(typeid): %w", err)
+	var typeID *uuid.UUID
+	if in.TypeId == "" {
+		tmp, err := uuid.Parse(in.TypeId)
+		if err != nil {
+			return nil, fmt.Errorf("uuid.Parse(typeid): %w", err)
+		}
+		typeID = &tmp
 	}
 
 	parentTypeID, err := uuid.Parse(in.Parent.TypeId)
@@ -22,7 +26,10 @@ func EntityType(in *entityv1.Type) (*entities.EntityType, error) {
 		return nil, fmt.Errorf("uuid.Parse(parent.typeid): %w", err)
 	}
 
-	e.ID = TypeID
+	if typeID != nil {
+		e.ID = *typeID
+	}
+
 	e.Wbtn = in.Wbtn
 	e.TypeName = in.TypeName
 	e.TypeDescription = in.TypeDescription
@@ -59,6 +66,7 @@ func ProtoType(in *entities.EntityType) (*entityv1.Type, error) {
 	e.Parent = &entityv1.TypeParent{
 		TypeId:   in.Parent.TypeID.String(),
 		TypeName: in.Parent.TypeName,
+		Wbtn:     in.Parent.TypeName,
 	}
 
 	if len(in.Attributes) > 0 {
@@ -72,5 +80,5 @@ func ProtoType(in *entities.EntityType) (*entityv1.Type, error) {
 		}
 	}
 
-	return &entityv1.Type{}, nil
+	return &e, nil
 }

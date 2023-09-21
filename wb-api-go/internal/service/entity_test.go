@@ -102,3 +102,54 @@ func TestEntityService_get(t *testing.T) {
 		})
 	}
 }
+
+func TestEntityService_CreateEntity(t *testing.T) {
+	type fields struct {
+		cache       Cache
+		reader      repository.ReaderDB
+		writer      repository.WriterDB
+		manager     repository.Manager
+		queries     EntityDataProvider
+		typeService TypeService
+	}
+	type args struct {
+		ctx    context.Context
+		entity *entities.Entity
+	}
+	tests := map[string]struct {
+		fields fields
+		args   args
+		mock   func(f *fields)
+		want   func(got *entities.Entity, err error)
+	}{
+		// TODO: Add test cases.
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			f := fields{
+				cache:       mock_service.NewMockCache(ctrl),
+				reader:      mock_repository.NewMockReaderDB(ctrl),
+				writer:      mock_repository.NewMockWriterDB(ctrl),
+				manager:     mock_repository.NewMockManager(ctrl),
+				queries:     mock_service.NewMockEntityDataProvider(ctrl),
+				typeService: mock_service.NewMockTypeService(ctrl),
+			}
+			if tt.mock != nil {
+				tt.mock(&f)
+			}
+			e := &EntityService{
+				cache:       tt.fields.cache,
+				reader:      tt.fields.reader,
+				writer:      tt.fields.writer,
+				manager:     tt.fields.manager,
+				queries:     tt.fields.queries,
+				typeService: tt.fields.typeService,
+			}
+			got, err := e.CreateEntity(tt.args.ctx, tt.args.entity)
+			tt.want(got, err)
+		})
+	}
+}

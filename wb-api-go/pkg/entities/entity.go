@@ -50,6 +50,7 @@ type EntityAttribute struct {
 type TypeReference struct {
 	TypeID   uuid.UUID `json:"type_id,omitempty"`
 	TypeName string    `json:"type_name,omitempty"`
+	Wbtn     string    `json:"wbtn,omitempty"`
 }
 
 type EntityType struct {

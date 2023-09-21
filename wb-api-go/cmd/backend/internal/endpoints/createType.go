@@ -21,6 +21,8 @@ func (e *EntityServer) CreateType(ctx context.Context,
 		return nil, fmt.Errorf("types.CreateType: %w", err)
 	}
 
+	fmt.Printf("Created: %+v\n", created)
+
 	protoType, err := conversions.ProtoType(created)
 	if err != nil {
 		return nil, fmt.Errorf("conversions.ProtoType: %w", err)

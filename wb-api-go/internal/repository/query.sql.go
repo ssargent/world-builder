@@ -127,6 +127,34 @@ func (q *Queries) CreateEntityAssociation(ctx context.Context, db DBTX, arg *Cre
 	return &i, err
 }
 
+const createEntityAttribute = `-- name: CreateEntityAttribute :one
+insert into world.entity_attributes
+(entity_id, attribute_id, attribute_value)
+values
+($1, $2, $3)
+returning id, entity_id, attribute_id, attribute_value, created_at, updated_at
+`
+
+type CreateEntityAttributeParams struct {
+	EntityID       uuid.UUID `json:"entity_id"`
+	AttributeID    uuid.UUID `json:"attribute_id"`
+	AttributeValue string    `json:"attribute_value"`
+}
+
+func (q *Queries) CreateEntityAttribute(ctx context.Context, db DBTX, arg *CreateEntityAttributeParams) (*WorldEntityAttribute, error) {
+	row := db.QueryRowContext(ctx, createEntityAttribute, arg.EntityID, arg.AttributeID, arg.AttributeValue)
+	var i WorldEntityAttribute
+	err := row.Scan(
+		&i.ID,
+		&i.EntityID,
+		&i.AttributeID,
+		&i.AttributeValue,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
 const createEntityHistory = `-- name: CreateEntityHistory :one
 insert into world.entity_history
 (entity_id, historic_value)

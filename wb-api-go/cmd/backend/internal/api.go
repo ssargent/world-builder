@@ -42,7 +42,7 @@ type API struct {
 	Reader *sqlx.DB
 	Writer *sqlx.DB
 	Entity *service.EntityService
-	Types  *service.TypeService
+	Types  service.TypeService
 }
 
 func NewAPI(cfg *config.Config, rdb *sqlx.DB, wdb *sqlx.DB, cache *cache.Cache) *API {
