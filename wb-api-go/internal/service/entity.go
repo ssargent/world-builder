@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -293,11 +292,6 @@ func (e *EntityService) getTypeAttributes(
 
 // CreateEntity creates a new entity in the database.
 func (e *EntityService) CreateEntity(ctx context.Context, entity *entities.Entity) (*entities.Entity, error) {
-	targetType, err := e.typeService.GetType(ctx, entity.Type)
-	if err != nil {
-		return nil, fmt.Errorf("GetType: %w", err)
-	}
-
 	txn, err := e.manager.Transaction(ctx, e.writer, &sql.TxOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("Transaction: %w", err)
@@ -325,58 +319,16 @@ func (e *EntityService) CreateEntity(ctx context.Context, entity *entities.Entit
 		return nil, fmt.Errorf("CreateEntity: %w", err)
 	}
 
-	// create the attributes
-	if missing, hasRequired := checkRequiredAttributes(entity.Attributes, targetType.Attributes); !hasRequired {
-		return nil, fmt.Errorf("missing required attributes: %s", strings.Join(missing, ", "))
-	}
-
-	for _, attr := range entity.Attributes {
-		attribute, err := e.queries.GetAttributeByWBATN(ctx, txn, attr.Name)
-		if err != nil {
-			return nil, fmt.Errorf("GetAttributeByWBATN: %w", err)
-		}
-
-		createEntityAttributeParams := repository.CreateEntityAttributeParams{
-			EntityID:       created.ID,
-			AttributeID:    attribute.ID,
-			AttributeValue: attr.Value,
-		}
-
-		_, err = e.queries.CreateEntityAttribute(ctx, txn, &createEntityAttributeParams)
-		if err != nil {
-			return nil, fmt.Errorf("CreateEntityAttribute: %w", err)
-		}
-	}
+	// // we've created the entity, check to see if it has required mandatory attributes.
+	// typeAttributes, err := e.queries.GetAttributesForType(ctx, e.reader, created.TypeID)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("GetAttributesForType: %w", err)
+	// }
 
 	if err := txn.Commit(); err != nil {
 		return nil, fmt.Errorf("commit: %w", err)
 	}
 
-	return nil, nil
-}
-
-// checkRequiredAttributes will check that all required attributes are present.
-func checkRequiredAttributes(attributes []*entities.EntityAttribute, definitions []*entities.Attribute) ([]string, bool) {
-	missing := make([]string, 0)
-	for _, def := range definitions {
-		if def.IsRequired {
-			found := false
-			for _, attr := range attributes {
-				if attr.Name == def.AttributeName {
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				missing = append(missing, def.AttributeName)
-			}
-		}
-	}
-
-	if len(missing) > 0 {
-		return missing, false
-	}
-
-	return nil, false
+	ent, err := e.get(ctx, e.reader, created.ID, true, true, true)
+	return ent, nil
 }
